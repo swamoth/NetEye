@@ -74,7 +74,7 @@ internet-outage-globe/
 ## 👥 Team
 
 - **[Sarada Mohanty]** - [@github-username](https://github.com/username)
-- **[Member 2]** - [@github-username](https://github.com/username)
+- **[Swagat Mohanty]** - [@github-username](https://github.com/username)
 - **[Member 3]** - [@github-username](https://github.com/username)
 
 ## 📄 License
