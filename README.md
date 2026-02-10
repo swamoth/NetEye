@@ -73,7 +73,7 @@ internet-outage-globe/
 
 ## 👥 Team
 
-- **[Your Name]** - [@github-username](https://github.com/username)
+- **[Sarada Mohanty]** - [@github-username](https://github.com/username)
 - **[Member 2]** - [@github-username](https://github.com/username)
 - **[Member 3]** - [@github-username](https://github.com/username)
 
