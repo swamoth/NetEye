@@ -1,0 +1,193 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens
+ * - Surfaces: one cool-navy family (tailwind `ink`), never pure black.
+ * - Radius system: panels 16px (.glass), blocks/controls 8px, chips pill.
+ * - Motion: 150-200ms transforms/opacity only; everything animated respects
+ *   prefers-reduced-motion.
+ * - Focus: every interactive element gets the same 2px accent ring.
+ */
+:root {
+  color-scheme: dark;
+  --panel: rgba(11, 18, 34, 0.82);
+  --panel-border: rgba(148, 163, 184, 0.14);
+  --panel-inner: rgba(148, 163, 184, 0.06);
+  --accent: #38bdf8;
+}
+
+html,
+body {
+  height: 100%;
+  background: #03060d;
+  color: #e2e8f0;
+  overscroll-behavior: none;
+}
+
+body {
+  @apply font-sans antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'ss01';
+}
+
+/* Skip link for keyboard users - visible only when focused. */
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-block focus:bg-ink-700 focus:px-3 focus:py-2 focus:text-sm focus:text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent;
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  button,
+  [role='button'] {
+    touch-action: manipulation;
+  }
+}
+
+@layer components {
+  .glass {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    box-shadow:
+      inset 0 1px 0 0 var(--panel-inner),
+      0 16px 48px -16px rgba(3, 6, 13, 0.85);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    @apply rounded-panel;
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .glass {
+      background: #0b1222;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium leading-none text-slate-200 transition-[background-color,border-color,transform] duration-150 select-none;
+  }
+  button.chip {
+    @apply hover:border-slate-500/70 active:scale-[0.98];
+  }
+
+  .kbd {
+    @apply inline-flex h-5 min-w-5 items-center justify-center rounded border border-slate-600/60 bg-slate-800/70 px-1 font-mono text-[10px] text-slate-300;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-1.5 rounded-block border border-slate-700/60 bg-slate-800/40 px-2.5 py-1.5 text-xs text-slate-200 transition-[background-color,border-color,transform] duration-150 hover:border-slate-500/70 hover:bg-slate-700/50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-1.5 rounded-block bg-accent px-3 py-1.5 text-xs font-semibold text-ink-950 transition-[filter,transform] duration-150 hover:brightness-110 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40;
+  }
+
+  .field {
+    @apply w-full rounded-block border border-slate-700/60 bg-ink-800/80 py-1.5 text-xs text-slate-100 placeholder:text-slate-400 transition-colors duration-150 focus:border-accent/60 focus:outline-none;
+  }
+
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.5) transparent;
+  }
+  .scroll-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scroll-thin::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.45);
+    border-radius: 999px;
+  }
+  .scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Numbers that align in columns. Stat-tile values stay proportional. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* globe.gl hover tooltips */
+.scene-tooltip {
+  pointer-events: none;
+  font-family: inherit !important;
+  font-size: 12px !important;
+  color: #e2e8f0 !important;
+  background: rgba(11, 18, 34, 0.94) !important;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  padding: 8px 10px !important;
+  max-width: 300px;
+  box-shadow: 0 12px 32px -12px rgba(3, 6, 13, 0.9);
+}
+.scene-tooltip .tt-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.scene-tooltip .tt-meta {
+  color: #94a3b8;
+  font-size: 11px;
+}
+.scene-tooltip .tt-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* timeline scrubber */
+input[type='range'].scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+input[type='range'].scrubber::-webkit-slider-runnable-track,
+input[type='range'].scrubber::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+}
+input[type='range'].scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 999px;
+  background: var(--accent);
+  border: 2px solid #0b1222;
+}
+input[type='range'].scrubber::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  border: 2px solid #0b1222;
+}
+input[type='range'].scrubber:focus-visible {
+  outline: none;
+}
+input[type='range'].scrubber:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.45);
+}
+
+/* Motion respects the user's preference: keep state visible, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
