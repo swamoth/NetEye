@@ -12,7 +12,8 @@ import type { GlobeMethods } from 'react-globe.gl';
 import type { ArcDatum, GlobeLayers, PathDatum, PointDatum, PolygonDatum, RingDatum } from './OutageMarker';
 import { withAlpha } from '@/app/utils/theme';
 
-const GlobeGL = dynamic(() => import('react-globe.gl'), { ssr: false });
+const loadGlobe = () => import('react-globe.gl');
+const GlobeGL = dynamic(loadGlobe, { ssr: false });
 
 export interface Pov {
   lat: number;
@@ -39,6 +40,8 @@ export interface GlobeLabel {
 export interface GlobeViewProps extends GlobeLayers {
   focus: Focus | null;
   initialPov: Pov | null;
+  /** Surface texture (object URL from useDotEarth). The globe mounts once it exists. */
+  textureUrl: string | null;
   autoRotate: boolean;
   label: GlobeLabel | null;
   onSelect: (incidentId: string | null) => void;
@@ -51,7 +54,7 @@ const DEFAULT_POV: Pov = { lat: 22, lng: 12, altitude: 2.3 };
 const IDLE_RESUME_MS = 6000;
 
 export default function Globe({
-  points, rings, arcs, paths, polygons, focus, initialPov, autoRotate, label, onSelect, onHover, onReady, onPovChange,
+  points, rings, arcs, paths, polygons, focus, initialPov, textureUrl, autoRotate, label, onSelect, onHover, onReady, onPovChange,
 }: GlobeViewProps) {
   const globeRef = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,6 +69,9 @@ export default function Globe({
   const initialPovRef = useRef(initialPov);
   initialPovRef.current = initialPov;
   const initialPovApplied = useRef(false);
+
+  // Warm the globe chunk while the surface texture is still being painted.
+  useEffect(() => { void loadGlobe(); }, []);
 
   // Track the container size so the canvas always fills it.
   useEffect(() => {
@@ -134,12 +140,12 @@ export default function Globe({
   // Watchdog: if the globe instance exists but never reported ready (e.g. a hot reload replaced
   // the instance mid-load), lift the boot screen anyway so the app is never stuck behind it.
   useEffect(() => {
-    if (ready || size.width === 0) return;
+    if (ready || size.width === 0 || !textureUrl) return;
     const id = setTimeout(() => {
       if (!ready && globeRef.current) handleReady();
     }, 8000);
     return () => clearTimeout(id);
-  }, [ready, size.width, handleReady]);
+  }, [ready, size.width, textureUrl, handleReady]);
 
   // Fly-to requests.
   useEffect(() => {
@@ -188,18 +194,16 @@ export default function Globe({
 
   return (
     <div ref={containerRef} className="absolute inset-0 select-none" aria-label="Interactive globe of internet incidents" role="img">
-      {size.width > 0 && (
+      {size.width > 0 && textureUrl && (
         <GlobeGL
           ref={globeRef}
           width={size.width}
           height={size.height}
-          globeImageUrl="/earth-night.jpg"
-          bumpImageUrl="/earth-topology.png"
-          backgroundImageUrl="/night-sky.png"
+          globeImageUrl={textureUrl}
           backgroundColor="rgba(0,0,0,0)"
           showAtmosphere
-          atmosphereColor="#aab3c2"
-          atmosphereAltitude={0.15}
+          atmosphereColor="#9aa3b0"
+          atmosphereAltitude={0.12}
           rendererConfig={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
           onGlobeReady={handleReady}
           onGlobeClick={globeClick}

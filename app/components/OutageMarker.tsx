@@ -7,7 +7,7 @@
  * per-id cache and mutates existing datums instead of recreating them. That is what keeps
  * ring/arc animations from restarting on every tick and keeps the frame rate flat.
  *
- * Marks on the globe use the brighter `glow` step of each type hue (the texture is far darker
+ * Marks on the globe use the brighter `glow` step of each type hue (the globe surface is far darker
  * than the panels); everything drawn on panels uses the validated `color` step.
  */
 

@@ -7,7 +7,7 @@ import type { IncidentType, Severity, IncidentStatus, AsnRole } from './types';
  * the dataviz palette checks against the dark panel surface: lightness band, chroma, CVD
  * separation (all pairs) and 3:1 contrast (higher still on the near-black #0a0a0a wells). Use `color` for anything drawn on panels: chips,
  * chart marks, histogram segments. `glow` is a brighter step of the same hue reserved for
- * emissive marks on the globe texture, where the surface is much darker and marks are tiny.
+ * emissive marks on the globe surface, where the surface is much darker and marks are tiny.
  *
  * Text never wears a data colour: identity comes from a coloured mark next to neutral text.
  */
