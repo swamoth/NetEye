@@ -5,37 +5,34 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Surfaces - one cool-navy family, no pure black.
-        ink: {
-          950: '#03060d',
-          900: '#070b16',
-          800: '#0b1222',
-          700: '#111a2e',
-          600: '#1a2540',
-          500: '#25334f',
-        },
-        // Incident-type palette, validated for the dark surface (see app/utils/theme.ts).
+        // Quiet monochrome chrome: near-black paper, one hairline, three ink steps.
+        // No hue lives in the chrome; colour is reserved for data marks and status.
+        paper: { DEFAULT: '#101010', 2: '#161616', 3: '#1c1c1c' },
+        well: { DEFAULT: '#0a0a0a', deep: '#060606' },
+        line: { DEFAULT: '#404040', strong: '#5a5a5a', soft: '#262626' },
+        fg: { DEFAULT: '#f5f5f5', soft: '#a0a0a0', mute: '#787878' },
+        // Incident-type palette, categorical (see app/utils/theme.ts).
         outage: '#e11d48',
         bgp: '#8b5cf6',
         ddos: '#0891b2',
         cable: '#d97706',
-        accent: '#38bdf8',
       },
       fontFamily: {
         sans: ['var(--font-geist-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['var(--font-geist-mono)', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
-      // Radius system: panels 16px, blocks 8px, controls 8px, chips pill.
+      // Radius system: panels 16px, tiles 10px, controls 8px, chips pill.
       borderRadius: {
         panel: '16px',
+        tile: '10px',
         block: '8px',
       },
-      boxShadow: {
-        panel: '0 16px 48px -16px rgba(3, 6, 13, 0.85), inset 0 1px 0 0 rgba(148, 163, 184, 0.08)',
+      transitionTimingFunction: {
+        house: 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
       keyframes: {
         fadeUp: {
-          from: { opacity: '0', transform: 'translateY(6px)' },
+          from: { opacity: '0', transform: 'translateY(8px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
         livePulse: {
@@ -44,7 +41,7 @@ const config: Config = {
         },
       },
       animation: {
-        fadeUp: 'fadeUp 180ms ease-out both',
+        fadeUp: 'fadeUp 400ms cubic-bezier(0.16, 1, 0.3, 1) both',
         livePulse: 'livePulse 1.8s ease-in-out infinite',
       },
     },

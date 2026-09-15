@@ -1,19 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Icon } from './ui';
+import type { CountryFeature } from '@/app/hooks/useGeoData';
+import AsciiWorld from './AsciiWorld';
 
 /**
- * Boot screen shown while the globe chunk and textures load. Fades out once globe.gl reports
- * ready and unmounts after the transition.
+ * Boot screen shown while the globe chunk and textures load: the world drawn in ASCII from the
+ * same land polygons the globe will render, a thin ring loader and a mono status line. Fades
+ * out once globe.gl reports ready and unmounts after the transition.
  */
-export default function BootOverlay({ ready, incidentCount }: { ready: boolean; incidentCount: number }) {
+export default function BootOverlay({ ready, incidentCount, countries }: { ready: boolean; incidentCount: number; countries: CountryFeature[] }) {
   const [gone, setGone] = useState(false);
   const [slow, setSlow] = useState(false);
 
   useEffect(() => {
     if (!ready) return;
-    const id = setTimeout(() => setGone(true), 500);
+    const id = setTimeout(() => setGone(true), 600);
     return () => clearTimeout(id);
   }, [ready]);
 
@@ -25,13 +27,25 @@ export default function BootOverlay({ ready, incidentCount }: { ready: boolean; 
   if (gone) return null;
 
   return (
-    <div className={`absolute inset-0 z-40 flex flex-col items-center justify-center bg-ink-950 transition-opacity duration-500 ${ready ? 'pointer-events-none opacity-0' : 'opacity-100'}`} role="status" aria-live="polite">
-      <span className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-panel border border-slate-700/60 bg-ink-800 text-accent motion-safe:animate-livePulse">
-        <Icon name="eye" className="h-7 w-7" />
-      </span>
-      <div className="text-lg font-semibold tracking-tight">NetEye</div>
-      <div className="mt-1 text-xs text-slate-400">Loading the globe. {incidentCount ? `${incidentCount} incidents ready.` : 'Fetching the incident feed.'}</div>
-      {slow && !ready && <div className="mt-4 max-w-xs text-center text-[11px] text-slate-400">Still loading. The textures are about 2 MB on a first visit. If nothing appears, WebGL may be disabled in this browser.</div>}
+    <div
+      className={`absolute inset-0 z-40 bg-well transition-opacity duration-[600ms] ease-house ${ready ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+      role="status"
+      aria-live="polite"
+    >
+      <AsciiWorld countries={countries} className="absolute inset-x-0 top-[8%] mx-auto h-[min(50vh,520px)] w-[min(94vw,1180px)]" />
+
+      <div className="absolute inset-x-0 bottom-[16%] flex flex-col items-center px-6 text-center">
+        <span className="ring-loader" aria-hidden />
+        <div className="mt-5 text-[15px] font-medium tracking-[-0.01em] text-fg">NetEye</div>
+        <div className="mt-1 font-mono text-[11px] text-fg-mute">
+          loading the globe · {incidentCount ? `${incidentCount} incidents ready` : 'fetching the incident feed'}
+        </div>
+        {slow && !ready && (
+          <div className="mt-4 max-w-xs font-mono text-[10.5px] leading-relaxed text-fg-mute">
+            still loading. the textures are about 2 MB on a first visit. if nothing appears, WebGL may be disabled in this browser.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

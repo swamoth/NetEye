@@ -45,7 +45,7 @@ shareable views and a documented API. Next.js 15, TypeScript, Tailwind, globe.gl
 |---|---|---|
 | Framework | Next.js 15 (App Router), React 19, TypeScript | SSR of the initial snapshot puts the incident list in the first HTML; API routes host the REST layer and proxy the upstreams |
 | 3D | [globe.gl](https://github.com/vasturiano/globe.gl) via react-globe.gl (Three.js) | Points, rings, arcs, paths, polygons, labels and camera fly-to out of the box; `Globe.tsx` isolates it behind a plain data contract |
-| UI | Tailwind CSS 3, Geist Sans and Mono (`next/font/local`), Phosphor icons | Dense dark cockpit; one accent; validated categorical palette for incident types |
+| UI | Tailwind CSS 3, Geist Sans and Mono (`next/font/local`), Phosphor icons, metal-fx | Quiet monochrome chrome (near-black paper, hairlines, mono meta); colour reserved for the validated incident-type palette and status |
 | Realtime | `ws` server (`server/websocket.js`) with polling fallback; RIS Live directly in the browser | Diff fan-out every 5 s; no shared state between processes |
 | Geo | Natural Earth 1:110m via `world-atlas` and `topojson-client` | Country polygons and point-in-country lookup, served statically |
 | Tests | Vitest | Radar mappers against real payload fixtures, aggregator with injected adapters, geo math, filters and URL state |

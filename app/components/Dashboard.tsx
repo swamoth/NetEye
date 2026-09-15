@@ -43,7 +43,7 @@ export default function Dashboard(p: DashboardProps) {
   return (
     <aside
       id="incident-list"
-      className={`glass pointer-events-auto absolute bottom-[7.5rem] left-3 top-[4.25rem] z-20 flex w-[min(340px,calc(100vw-1.5rem))] flex-col overflow-hidden transition-transform duration-200 md:left-4 md:translate-x-0 ${p.open ? 'translate-x-0' : '-translate-x-[120%]'}`}
+      className={`bar pointer-events-auto absolute bottom-[7.5rem] left-3 top-[4.25rem] z-20 flex w-[min(340px,calc(100vw-1.5rem))] flex-col overflow-clip transition-transform duration-200 ease-house md:left-4 md:translate-x-0 ${p.open ? 'translate-x-0' : '-translate-x-[120%]'}`}
       aria-label="Incident dashboard"
     >
       {/* KPI row */}
@@ -57,8 +57,8 @@ export default function Dashboard(p: DashboardProps) {
       {/* Filters */}
       <div className="px-3 pb-2">
         <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-300">Incident types</span>
-          {filtersActive && <button type="button" className="text-[11px] text-accent hover:underline" onClick={p.onResetFilters}>Reset filters</button>}
+          <span className="mono-label">Incident types</span>
+          {filtersActive && <button type="button" className="font-mono text-[10.5px] text-fg-soft underline decoration-line underline-offset-2 transition-colors duration-200 ease-house hover:text-fg" onClick={p.onResetFilters}>reset filters</button>}
         </div>
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by incident type">
           {INCIDENT_TYPES.map((type) => {
@@ -69,7 +69,7 @@ export default function Dashboard(p: DashboardProps) {
               <button
                 key={type}
                 type="button"
-                className={`chip ${on ? 'border-slate-500/70 bg-ink-600/70' : 'border-slate-700/60 bg-transparent text-slate-400'} disabled:cursor-not-allowed disabled:opacity-50`}
+                className={`chip ${on ? 'is-on' : ''} disabled:cursor-not-allowed disabled:opacity-40`}
                 aria-pressed={on}
                 disabled={!covered}
                 onClick={() => p.onToggleType(type)}
@@ -77,7 +77,7 @@ export default function Dashboard(p: DashboardProps) {
               >
                 <Dot color={on ? m.color : withAlpha(m.color, 0.35)} />
                 {m.label}
-                {covered ? <span className="tnum text-slate-400">{s.activeByType[type]}</span> : <span className="text-[10px] text-slate-500">no feed</span>}
+                {covered ? <span className="tnum font-mono text-[10px] text-fg-mute">{s.activeByType[type]}</span> : <span className="font-mono text-[10px] text-fg-mute">no feed</span>}
               </button>
             );
           })}
@@ -90,7 +90,7 @@ export default function Dashboard(p: DashboardProps) {
               <button
                 key={sev}
                 type="button"
-                className={`chip ${on ? 'border-slate-500/70 bg-ink-600/70' : 'border-slate-700/60 bg-transparent text-slate-400'}`}
+                className={`chip ${on ? 'is-on' : ''}`}
                 aria-pressed={on}
                 onClick={() => p.onToggleSeverity(sev)}
               >
@@ -101,7 +101,7 @@ export default function Dashboard(p: DashboardProps) {
           })}
           <button
             type="button"
-            className={`chip ml-auto ${p.showResolved ? 'border-slate-500/70 bg-ink-600/70' : 'border-slate-700/60 bg-transparent text-slate-400'}`}
+            className={`chip ml-auto ${p.showResolved ? 'is-on' : ''}`}
             aria-pressed={p.showResolved}
             onClick={p.onToggleResolved}
             title="Include resolved incidents in the list"
@@ -112,7 +112,7 @@ export default function Dashboard(p: DashboardProps) {
         </div>
         <label className="relative mt-2 block">
           <span className="sr-only">Filter incidents</span>
-          <Icon name="search" className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+          <Icon name="search" className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fg-mute" />
           <input
             value={p.query}
             onChange={(e) => p.onQuery(e.target.value)}
@@ -120,7 +120,7 @@ export default function Dashboard(p: DashboardProps) {
             className="field pl-8 pr-8"
           />
           {p.query && (
-            <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-100" onClick={() => p.onQuery('')} aria-label="Clear filter">
+            <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-fg-mute transition-colors duration-200 ease-house hover:text-fg" onClick={() => p.onQuery('')} aria-label="Clear filter">
               <Icon name="close" className="h-3.5 w-3.5" />
             </button>
           )}
@@ -128,21 +128,21 @@ export default function Dashboard(p: DashboardProps) {
       </div>
 
       {/* List header */}
-      <div className="flex items-center justify-between border-t border-slate-700/40 px-3 py-2">
-        <h2 className="text-xs font-semibold text-slate-300">
+      <div className="flex items-center justify-between border-t border-line-soft px-3 py-2">
+        <h2 className="text-xs font-medium text-fg">
           <span className="tnum">{p.list.length}</span> incident{p.list.length === 1 ? '' : 's'}
-          {!p.isLive && <span className="ml-1.5 font-normal text-accent">at replay time</span>}
+          {!p.isLive && <span className="ml-1.5 font-mono text-[10.5px] font-normal text-fg-mute">at replay time</span>}
         </h2>
         <div className="relative">
-          <button type="button" className="btn-ghost !py-1" onClick={() => setExportOpen((o) => !o)} aria-expanded={exportOpen} aria-haspopup="menu" title="Export the current list">
+          <button type="button" className="btn !py-1" onClick={() => setExportOpen((o) => !o)} aria-expanded={exportOpen} aria-haspopup="menu" title="Export the current list">
             <Icon name="download" className="h-3.5 w-3.5" /> Export
           </button>
           {exportOpen && (
-            <div role="menu" className="glass absolute right-0 top-8 z-10 flex w-44 flex-col p-1 text-xs" onMouseLeave={() => setExportOpen(false)}>
-              <button type="button" role="menuitem" className="rounded-block px-2 py-1.5 text-left hover:bg-slate-700/50" onClick={() => { p.onExport('csv'); setExportOpen(false); }}>CSV of this list</button>
-              <button type="button" role="menuitem" className="rounded-block px-2 py-1.5 text-left hover:bg-slate-700/50" onClick={() => { p.onExport('json'); setExportOpen(false); }}>JSON of this list</button>
-              <a role="menuitem" className="rounded-block px-2 py-1.5 text-left hover:bg-slate-700/50" href="/api/feed" target="_blank" rel="noreferrer">RSS feed</a>
-              <a role="menuitem" className="rounded-block px-2 py-1.5 text-left hover:bg-slate-700/50" href="/api/outages" target="_blank" rel="noreferrer">REST API</a>
+            <div role="menu" className="bar absolute right-0 top-8 z-10 flex w-44 flex-col p-1 text-xs !rounded-tile" onMouseLeave={() => setExportOpen(false)}>
+              <button type="button" role="menuitem" className="rounded-block px-2 py-1.5 text-left text-fg-soft transition-colors duration-200 ease-house hover:bg-white/[0.04] hover:text-fg" onClick={() => { p.onExport('csv'); setExportOpen(false); }}>CSV of this list</button>
+              <button type="button" role="menuitem" className="rounded-block px-2 py-1.5 text-left text-fg-soft transition-colors duration-200 ease-house hover:bg-white/[0.04] hover:text-fg" onClick={() => { p.onExport('json'); setExportOpen(false); }}>JSON of this list</button>
+              <a role="menuitem" className="rounded-block px-2 py-1.5 text-left text-fg-soft transition-colors duration-200 ease-house hover:bg-white/[0.04] hover:text-fg" href="/api/feed" target="_blank" rel="noreferrer">RSS feed</a>
+              <a role="menuitem" className="rounded-block px-2 py-1.5 text-left text-fg-soft transition-colors duration-200 ease-house hover:bg-white/[0.04] hover:text-fg" href="/api/outages" target="_blank" rel="noreferrer">REST API</a>
             </div>
           )}
         </div>
@@ -154,12 +154,12 @@ export default function Dashboard(p: DashboardProps) {
           <EmptyState
             icon="warning"
             title="No live data source configured"
-            body={<>NetEye shows real incidents only. Add <code className="font-mono text-slate-300">CLOUDFLARE_API_TOKEN</code> to <code className="font-mono text-slate-300">.env.local</code> and restart the servers.</>}
-            action={<a className="btn-ghost" href="https://github.com/swamoth/NetEye#getting-a-cloudflare-radar-token-free" target="_blank" rel="noreferrer">How to get a token <Icon name="external" className="h-3 w-3" /></a>}
+            body={<>NetEye shows real incidents only. Add <code className="font-mono text-fg-soft">CLOUDFLARE_API_TOKEN</code> to <code className="font-mono text-fg-soft">.env.local</code> and restart the servers.</>}
+            action={<a className="btn" href="https://github.com/swamoth/NetEye#getting-a-cloudflare-radar-token-free" target="_blank" rel="noreferrer">How to get a token <Icon name="external" className="h-3 w-3" /></a>}
           />
         ) : p.list.length === 0 ? (
           filtersActive ? (
-            <EmptyState icon="filter" title="No incidents match these filters" action={<button type="button" className="btn-ghost" onClick={p.onResetFilters}>Reset filters</button>} />
+            <EmptyState icon="filter" title="No incidents match these filters" action={<button type="button" className="btn" onClick={p.onResetFilters}>Reset filters</button>} />
           ) : (
             <EmptyState
               icon={sourceError ? 'warning' : 'check'}
@@ -168,7 +168,7 @@ export default function Dashboard(p: DashboardProps) {
             />
           )
         ) : (
-          <ul className="m-0 list-none p-0">
+          <ul className="dim-list m-0 list-none p-0">
             {p.list.map((inc) => (
               <IncidentRow
                 key={inc.id}
@@ -220,13 +220,13 @@ const IncidentRow = memo(function IncidentRow({ inc, t, selected, hovered, mine,
         onFocus={() => onHover(inc.id)}
         onBlur={() => onHover(null)}
         aria-pressed={selected}
-        className={`group mb-1 flex w-full gap-2.5 rounded-block border px-2.5 py-2 text-left transition-[background-color,border-color] duration-150 ${
-          selected ? 'border-accent/50 bg-accent/10' : hovered ? 'border-slate-600/70 bg-slate-800/60' : 'border-transparent hover:border-slate-700/70 hover:bg-slate-800/40'
+        className={`dim-row group mb-1 flex w-full gap-2.5 rounded-tile border px-2.5 py-2 text-left transition-[background-color,border-color] duration-200 ease-house ${
+          selected ? 'is-selected border-line-strong bg-white/[0.06]' : hovered ? 'border-line bg-white/[0.03]' : 'border-transparent hover:border-line hover:bg-white/[0.03]'
         } ${status === 'resolved' ? 'opacity-60' : ''}`}
       >
         <span aria-hidden className="mt-0.5 w-[3px] shrink-0 self-stretch rounded-full" style={{ background: m.color }} />
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5 text-[11px] text-slate-400">
+          <span className="flex items-center gap-1.5 font-mono text-[10.5px] text-fg-mute">
             <span>{m.short}</span>
             <span aria-hidden>·</span>
             <span className="inline-flex items-center gap-1">
@@ -238,16 +238,16 @@ const IncidentRow = memo(function IncidentRow({ inc, t, selected, hovered, mine,
               {sev.label}
             </span>
             <span className="ml-auto flex items-center gap-1.5">
-              {mine && <span className="rounded bg-emerald-500/15 px-1 text-emerald-200" title="Touches your network">you</span>}
+              {mine && <span className="rounded-full bg-emerald-500/15 px-1.5 text-emerald-200" title="Touches your network">you</span>}
               <time dateTime={inc.startedAt}>{formatRelative(inc.startedAt, t)}</time>
             </span>
           </span>
-          <span className="mt-0.5 block truncate text-xs font-medium text-slate-100" title={inc.title}>{inc.title}</span>
-          <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-400">
+          <span className="mt-0.5 block truncate text-xs font-medium text-fg" title={inc.title}>{inc.title}</span>
+          <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-fg-mute">
             <Dot color={STATUS_META[status].color} className="h-1.5 w-1.5" />
             <span className="sr-only">{STATUS_META[status].label},</span>
             <span className="truncate">{where}</span>
-            {inc.affectedASNs[0] && <span className="tnum ml-auto shrink-0 text-slate-400">AS{inc.affectedASNs[0].asn}</span>}
+            {inc.affectedASNs[0] && <span className="tnum ml-auto shrink-0 font-mono text-[10.5px] text-fg-mute">AS{inc.affectedASNs[0].asn}</span>}
           </span>
         </span>
       </button>

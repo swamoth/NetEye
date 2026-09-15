@@ -38,7 +38,7 @@ export function Dot({ color, className = '' }: { color: string; className?: stri
 export function TypeBadge({ type, className = '' }: { type: IncidentType; className?: string }) {
   const m = TYPE_META[type];
   return (
-    <span className={`chip border-slate-700/70 bg-ink-700/60 ${className}`}>
+    <span className={`chip ${className}`}>
       <Dot color={m.color} />
       {m.label}
     </span>
@@ -48,7 +48,7 @@ export function TypeBadge({ type, className = '' }: { type: IncidentType; classN
 export function SeverityBadge({ severity, className = '' }: { severity: Severity; className?: string }) {
   const m = SEVERITY_META[severity];
   return (
-    <span className={`chip border-slate-700/70 bg-ink-700/60 ${className}`} title={`${m.label} severity`}>
+    <span className={`chip ${className}`} title={`${m.label} severity`}>
       <span aria-hidden className="inline-flex items-end gap-px">
         {[0, 1, 2, 3].map((i) => (
           <span key={i} className="w-[3px] rounded-[1px]" style={{ height: 4 + i * 2, background: i <= m.rank ? m.color : withAlpha(m.color, 0.2) }} />
@@ -62,7 +62,7 @@ export function SeverityBadge({ severity, className = '' }: { severity: Severity
 export function StatusBadge({ status, className = '' }: { status: IncidentStatus; className?: string }) {
   const m = STATUS_META[status];
   return (
-    <span className={`chip border-slate-700/70 bg-ink-700/60 ${className}`}>
+    <span className={`chip ${className}`}>
       <Dot color={m.color} className={status === 'active' ? 'motion-safe:animate-livePulse' : ''} />
       {m.label}
     </span>
@@ -77,11 +77,11 @@ export function SourceBadge({ name, link, className = '' }: { name: string; link
     </>
   );
   return link ? (
-    <a className={`chip border-slate-700/70 bg-ink-700/60 hover:border-slate-500/70 ${className}`} href={link} target="_blank" rel="noreferrer" title={`Live data from ${name}. Opens the source.`}>
+    <a className={`chip hover:border-line-strong hover:text-fg ${className}`} href={link} target="_blank" rel="noreferrer" title={`Live data from ${name}. Opens the source.`}>
       {inner}
     </a>
   ) : (
-    <span className={`chip border-slate-700/70 bg-ink-700/60 ${className}`} title={`Live data from ${name}`}>{inner}</span>
+    <span className={`chip ${className}`} title={`Live data from ${name}`}>{inner}</span>
   );
 }
 
@@ -89,41 +89,42 @@ export function SourceBadge({ name, link, className = '' }: { name: string; link
  * Layout helpers
  * ------------------------------------------------------------------------- */
 
+/** Section heading: small tracked mono label, optional right-hand meta. */
 export function SectionTitle({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
     <div className="mb-2 flex items-center justify-between gap-2">
-      <h3 className="text-xs font-semibold text-slate-300">{children}</h3>
-      {right}
+      <h3 className="mono-label">{children}</h3>
+      {right && <span className="font-mono text-[10px] text-fg-mute">{right}</span>}
     </div>
   );
 }
 
 /**
- * Stat tile (dataviz contract): sentence-case label, proportional semibold value in the body
- * sans, optional sub-line. No estimates live here; every value is a count from the feed.
+ * Stat tile (dataviz contract): mono label, proportional semibold value in the body sans,
+ * optional mono sub-line. No estimates live here; every value is a count from the feed.
  */
 export function Stat({ label, value, sub, title }: { label: string; value: ReactNode; sub?: ReactNode; title?: string }) {
   return (
-    <div className="rounded-block border border-slate-700/40 bg-ink-800/60 px-3 py-2" title={title}>
-      <div className="text-[11px] text-slate-400">{label}</div>
-      <div className="mt-0.5 text-2xl font-semibold leading-none tracking-tight text-slate-50">{value}</div>
-      {sub && <div className="mt-1 text-[11px] leading-snug text-slate-400">{sub}</div>}
+    <div className="tile px-3 py-2.5" title={title}>
+      <div className="font-mono text-[10.5px] text-fg-mute">{label}</div>
+      <div className="mt-1 text-[22px] font-semibold leading-none tracking-[-0.02em] text-fg">{value}</div>
+      {sub && <div className="mt-1.5 font-mono text-[10.5px] leading-snug text-fg-mute">{sub}</div>}
     </div>
   );
 }
 
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div aria-hidden className={`motion-safe:animate-pulse rounded-block bg-slate-700/40 ${className}`} />;
+  return <div aria-hidden className={`motion-safe:animate-pulse rounded-tile bg-white/[0.05] ${className}`} />;
 }
 
 export function EmptyState({ icon = 'info', title, body, action }: { icon?: IconName; title: string; body?: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center px-4 py-8 text-center">
-      <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-block border border-slate-700/60 text-slate-300">
+      <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-tile border border-line text-fg-soft">
         <Icon name={icon} className="h-4 w-4" />
       </span>
-      <div className="text-sm font-medium text-slate-100">{title}</div>
-      {body && <div className="mt-1 max-w-[28ch] text-xs leading-relaxed text-slate-400">{body}</div>}
+      <div className="text-sm font-medium text-fg">{title}</div>
+      {body && <div className="mt-1 max-w-[30ch] text-xs leading-relaxed text-fg-mute">{body}</div>}
       {action && <div className="mt-3">{action}</div>}
     </div>
   );

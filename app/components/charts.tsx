@@ -10,7 +10,7 @@
  */
 
 import { useId } from 'react';
-import { SURFACE, TEXT } from '@/app/utils/theme';
+import { NEUTRAL, SURFACE, TEXT } from '@/app/utils/theme';
 import { Dot } from './ui';
 
 export interface Segment {
@@ -38,19 +38,19 @@ export function StackedBar({ segments, height = 10, ariaLabel, format = (v: numb
     <figure className="m-0">
       <div className="flex w-full overflow-hidden rounded-[4px]" style={{ height, background: SURFACE, gap: 2 }} role="img" aria-label={ariaLabel}>
         {total === 0 ? (
-          <div className="h-full w-full rounded-[4px] bg-slate-700/40" />
+          <div className="h-full w-full rounded-[4px]" style={{ background: NEUTRAL.track }} />
         ) : (
           visible.map((s) => (
             <div key={s.key} className="h-full rounded-[2px] first:rounded-l-[4px] last:rounded-r-[4px]" style={{ width: `${(s.value / total) * 100}%`, background: s.color, minWidth: 3 }} title={`${s.label}: ${format(s.value)} (${sharePct(s.value, total)})`} />
           ))
         )}
       </div>
-      <figcaption className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-300">
+      <figcaption className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-fg-soft">
         {segments.map((s) => (
           <span key={s.key} className="inline-flex items-center gap-1.5">
             <Dot color={s.color} />
             {s.label}
-            <span className="tnum text-slate-400">{format(s.value)}{total ? ` (${sharePct(s.value, total)})` : ''}</span>
+            <span className="tnum font-mono text-[10.5px] text-fg-mute">{format(s.value)}{total ? ` (${sharePct(s.value, total)})` : ''}</span>
           </span>
         ))}
       </figcaption>
@@ -84,19 +84,19 @@ export function BarList({ items, color, ariaLabel, format = (v: number) => Strin
           const row = (
             <>
               <div className="flex items-baseline justify-between gap-2 text-[11px]">
-                <span className="truncate text-slate-200">{it.label}</span>
-                <span className="tnum shrink-0 text-slate-300">{format(it.value)}</span>
+                <span className="truncate text-fg-soft">{it.label}</span>
+                <span className="tnum shrink-0 font-mono text-[10.5px] text-fg-soft">{format(it.value)}</span>
               </div>
-              <div className="mt-1 h-[6px] w-full rounded-[3px]" style={{ background: 'rgba(148,163,184,0.10)' }}>
+              <div className="mt-1 h-[6px] w-full rounded-[3px]" style={{ background: NEUTRAL.track }}>
                 <div className="h-full rounded-r-[3px]" style={{ width: `${Math.max(2, (it.value / top) * 100)}%`, background: color }} />
               </div>
-              {it.sub && <div className="mt-0.5 text-[10px] text-slate-400">{it.sub}</div>}
+              {it.sub && <div className="mt-0.5 font-mono text-[10px] text-fg-mute">{it.sub}</div>}
             </>
           );
           return (
             <li key={it.key}>
               {it.onClick ? (
-                <button type="button" onClick={it.onClick} className="block w-full rounded-block px-1 py-0.5 text-left transition-colors hover:bg-slate-700/40">
+                <button type="button" onClick={it.onClick} className="block w-full rounded-block px-1 py-0.5 text-left transition-colors duration-200 ease-house hover:bg-white/[0.04]">
                   {row}
                 </button>
               ) : (
@@ -131,7 +131,7 @@ export function Sparkline({ data, color, height = 44, ariaLabel, unit = '' }: { 
             <stop offset="1" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
-        <line x1={pad} x2={w - pad} y1={h - pad} y2={h - pad} stroke="rgba(148,163,184,0.18)" strokeWidth="1" />
+        <line x1={pad} x2={w - pad} y1={h - pad} y2={h - pad} stroke={NEUTRAL.grid} strokeWidth="1" />
         {pts.length > 1 && <path d={area} fill={`url(#${id}-fill)`} />}
         {pts.length > 1 && <path d={line} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />}
         {pts.length > 0 && (
@@ -141,7 +141,7 @@ export function Sparkline({ data, color, height = 44, ariaLabel, unit = '' }: { 
           </>
         )}
       </svg>
-      <figcaption className="mt-0.5 flex justify-between text-[10px]" style={{ color: TEXT.muted }}>
+      <figcaption className="mt-0.5 flex justify-between font-mono text-[10px]" style={{ color: TEXT.muted }}>
         <span>peak {max}{unit}</span>
         <span className="tnum" style={{ color: TEXT.secondary }}>now {last}{unit}</span>
       </figcaption>

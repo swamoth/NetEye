@@ -168,28 +168,28 @@ export default function CommandPalette({ open, items, onClose, onOpenAsn }: Comm
 
   let index = -1;
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-3 pt-[12vh] backdrop-blur-sm" onMouseDown={onClose} role="dialog" aria-modal="true" aria-label="Command palette">
-      <div className="glass w-full max-w-xl overflow-hidden motion-safe:animate-fadeUp" onMouseDown={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-2 border-b border-slate-700/50 px-3 py-2.5">
-          <Icon name="search" className="h-4 w-4 text-slate-400" />
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 px-3 pt-[12vh] backdrop-blur-[6px]" onMouseDown={onClose} role="dialog" aria-modal="true" aria-label="Command palette">
+      <div className="bar w-full max-w-xl overflow-hidden motion-safe:animate-fadeUp" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2 border-b border-line-soft px-3 py-2.5">
+          <Icon name="search" className="h-4 w-4 text-fg-mute" />
           <input
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKey}
             placeholder="Search incidents, networks (AS13335), cities, countries, cables, or an action"
-            className="flex-1 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-fg placeholder:text-fg-mute focus:outline-none"
           />
           <span className="kbd">esc</span>
         </div>
         <div ref={listRef} className="scroll-thin max-h-[52vh] overflow-y-auto p-1.5">
-          {results.flat.length === 0 && <div className="px-3 py-8 text-center text-sm text-slate-400">Nothing matches &ldquo;{q}&rdquo;.</div>}
+          {results.flat.length === 0 && <div className="px-3 py-8 text-center text-sm text-fg-mute">Nothing matches &ldquo;{q}&rdquo;.</div>}
           {KIND_ORDER.map((kind) => {
             const group = results.groups.get(kind);
             if (!group?.length) return null;
             return (
               <div key={kind} className="mb-1">
-                <div className="px-2 pb-1 pt-1.5 text-[11px] font-semibold text-slate-400">{KIND_LABEL[kind]}</div>
+                <div className="mono-label px-2 pb-1 pt-2">{KIND_LABEL[kind]}</div>
                 {group.map((item) => {
                   index += 1;
                   const active = index === cursor;
@@ -200,16 +200,16 @@ export default function CommandPalette({ open, items, onClose, onOpenAsn }: Comm
                       data-index={i}
                       onMouseEnter={() => setCursor(i)}
                       onClick={() => run(item)}
-                      className={`flex w-full items-center gap-2.5 rounded-block px-2 py-1.5 text-left ${active ? 'bg-accent/15' : 'hover:bg-slate-800/60'}`}
+                      className={`flex w-full items-center gap-2.5 rounded-block px-2 py-1.5 text-left transition-colors duration-150 ease-house ${active ? 'bg-white/[0.07]' : 'hover:bg-white/[0.04]'}`}
                     >
                       {item.color ? (
                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: item.color }} />
                       ) : (
-                        <Icon name={item.icon ?? 'globe'} className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                        <Icon name={item.icon ?? 'globe'} className="h-3.5 w-3.5 shrink-0 text-fg-mute" />
                       )}
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13px] text-slate-100">{item.title}</span>
-                        {item.subtitle && <span className="block truncate text-[11px] text-slate-400">{item.subtitle}</span>}
+                        <span className="block truncate text-[13px] text-fg">{item.title}</span>
+                        {item.subtitle && <span className="block truncate font-mono text-[10.5px] text-fg-mute">{item.subtitle}</span>}
                       </span>
                       {active && <span className="kbd">↵</span>}
                     </button>
@@ -219,7 +219,7 @@ export default function CommandPalette({ open, items, onClose, onOpenAsn }: Comm
             );
           })}
         </div>
-        <div className="flex items-center gap-3 border-t border-slate-700/50 px-3 py-1.5 text-[10px] text-slate-400">
+        <div className="flex items-center gap-3 border-t border-line-soft px-3 py-1.5 font-mono text-[10px] text-fg-mute">
           <span><span className="kbd">↑</span> <span className="kbd">↓</span> navigate</span>
           <span><span className="kbd">↵</span> select</span>
           <span className="ml-auto">{results.flat.length} result{results.flat.length === 1 ? '' : 's'}</span>

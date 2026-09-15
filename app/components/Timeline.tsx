@@ -8,6 +8,7 @@ import { formatRelative, formatUtcDateTime, formatUtcTime } from '@/app/utils/fo
 import type { ReplayClock } from '@/app/hooks/useReplayClock';
 import { SPEEDS } from '@/app/hooks/useReplayClock';
 import { Dot, Icon } from './ui';
+import MetalSurface from './MetalSurface';
 
 export interface TimelineProps {
   incidents: Incident[];
@@ -35,23 +36,31 @@ export default function Timeline({ incidents, coveredTypes, clock }: TimelinePro
   }, [from, now]);
 
   return (
-    <section className="glass pointer-events-auto absolute bottom-3 left-1/2 z-20 w-[min(960px,calc(100vw-1.5rem))] -translate-x-1/2 px-3 pb-2 pt-2 md:bottom-4" aria-label="24 hour timeline and replay controls">
+    <section className="bar pointer-events-auto absolute bottom-3 left-1/2 z-20 w-[min(960px,calc(100vw-1.5rem))] -translate-x-1/2 px-3 pb-2 pt-2 md:bottom-4" aria-label="24 hour timeline and replay controls">
       <div className="flex items-center gap-2">
-        <button type="button" className="btn-ghost !px-2" title="Back one hour" onClick={() => clock.setViewTime(Math.max(from, t - HOUR_MS))}>
+        <button type="button" className="btn !px-2 font-mono" title="Back one hour" onClick={() => clock.setViewTime(Math.max(from, t - HOUR_MS))}>
           <span className="tnum text-[11px]">-1h</span>
         </button>
-        <button type="button" className="btn-ghost !px-2" title={playing ? 'Pause replay' : isLive ? 'Replay the last 24 hours' : 'Play from here'} aria-pressed={playing} onClick={clock.togglePlaying}>
-          <Icon name={playing ? 'pause' : 'play'} className="h-3.5 w-3.5" label={playing ? 'Pause' : 'Play'} />
+        <button
+          type="button"
+          className="group press rounded-full"
+          title={playing ? 'Pause replay' : isLive ? 'Replay the last 24 hours' : 'Play from here'}
+          aria-pressed={playing}
+          onClick={clock.togglePlaying}
+        >
+          <MetalSurface size={32} tone={playing ? 'bright' : 'soft'}>
+            <Icon name={playing ? 'pause' : 'play'} className="h-3.5 w-3.5" label={playing ? 'Pause' : 'Play'} />
+          </MetalSurface>
         </button>
-        <button type="button" className="btn-ghost !px-2" title="Forward one hour" onClick={() => clock.setViewTime(t + HOUR_MS)} disabled={isLive}>
+        <button type="button" className="btn !px-2 font-mono" title="Forward one hour" onClick={() => clock.setViewTime(t + HOUR_MS)} disabled={isLive}>
           <span className="tnum text-[11px]">+1h</span>
         </button>
-        <div className="hidden items-center gap-0.5 rounded-block border border-slate-700/60 bg-slate-800/40 p-0.5 sm:flex" role="group" aria-label="Replay speed">
+        <div className="hidden items-center gap-0.5 rounded-full border border-line p-0.5 sm:flex" role="group" aria-label="Replay speed">
           {SPEEDS.map((s) => (
             <button
               key={s}
               type="button"
-              className={`tnum rounded px-1.5 py-0.5 text-[10px] transition-colors ${speed === s ? 'bg-accent/20 text-slate-50' : 'text-slate-400 hover:text-slate-100'}`}
+              className={`tnum rounded-full px-2 py-0.5 font-mono text-[10px] transition-colors duration-200 ease-house ${speed === s ? 'bg-white/[0.08] text-fg' : 'text-fg-mute hover:text-fg'}`}
               aria-pressed={speed === s}
               onClick={() => clock.setSpeed(s)}
             >
@@ -60,23 +69,23 @@ export default function Timeline({ incidents, coveredTypes, clock }: TimelinePro
           ))}
         </div>
 
-        <div className="ml-2 hidden items-center gap-3 text-[10px] text-slate-400 lg:flex" aria-label="Legend">
+        <div className="ml-2 hidden items-center gap-3 font-mono text-[10px] text-fg-mute lg:flex" aria-label="Legend">
           {legendTypes.map((k) => (
-            <span key={k} className="inline-flex items-center gap-1"><Dot color={TYPE_META[k].color} className="h-1.5 w-1.5" />{TYPE_META[k].label}</span>
+            <span key={k} className="inline-flex items-center gap-1"><Dot color={TYPE_META[k].color} className="h-1.5 w-1.5" />{TYPE_META[k].label.toLowerCase()}</span>
           ))}
         </div>
 
         <div className="ml-auto flex items-center gap-2 text-[11px]">
           {isLive ? (
-            <span className="inline-flex items-center gap-1.5 text-slate-200">
+            <span className="inline-flex items-center gap-1.5 text-fg">
               <Dot color="#34d399" className="motion-safe:animate-livePulse" />
-              Live <span className="tnum text-slate-400">{formatUtcTime(now, false)} UTC</span>
+              Live <span className="tnum font-mono text-[10.5px] text-fg-mute">{formatUtcTime(now, false)} UTC</span>
             </span>
           ) : (
             <>
-              <time className="tnum text-slate-100" dateTime={new Date(t).toISOString()}>{formatUtcDateTime(t)}</time>
-              <span className="text-slate-400">({formatRelative(t, now)})</span>
-              <button type="button" className="btn-ghost !py-1" onClick={clock.goLive} title="Return to live">
+              <time className="tnum font-mono text-[10.5px] text-fg" dateTime={new Date(t).toISOString()}>{formatUtcDateTime(t)}</time>
+              <span className="font-mono text-[10.5px] text-fg-mute">({formatRelative(t, now)})</span>
+              <button type="button" className="btn !py-1" onClick={clock.goLive} title="Return to live">
                 <Icon name="live" className="h-3.5 w-3.5" /> Go live
               </button>
             </>
@@ -92,7 +101,7 @@ export default function Timeline({ incidents, coveredTypes, clock }: TimelinePro
             const binStart = from + (i / BINS) * DAY_MS;
             const past = binStart <= t;
             return (
-              <div key={i} className="flex max-w-[24px] flex-1 flex-col-reverse gap-[2px]" style={{ height: '100%', opacity: past ? 1 : 0.35 }} title={`${total} incident${total === 1 ? '' : 's'} starting ${formatUtcTime(binStart, false)} to ${formatUtcTime(binStart + DAY_MS / BINS, false)} UTC`}>
+              <div key={i} className="flex max-w-[24px] flex-1 flex-col-reverse gap-[2px]" style={{ height: '100%', opacity: past ? 1 : 0.3 }} title={`${total} incident${total === 1 ? '' : 's'} starting ${formatUtcTime(binStart, false)} to ${formatUtcTime(binStart + DAY_MS / BINS, false)} UTC`}>
                 {TYPE_ORDER.map((k, idx) => (b[k]
                   ? <div key={k} className={idx === TYPE_ORDER.findLastIndex((kk) => b[kk] > 0) ? 'rounded-t-[4px]' : ''} style={{ height: `calc(${(b[k] / max) * 100}% - 1px)`, background: TYPE_META[k].color, minHeight: 2 }} />
                   : null))}
@@ -100,8 +109,8 @@ export default function Timeline({ incidents, coveredTypes, clock }: TimelinePro
             );
           })}
         </div>
-        <div className="absolute inset-x-[7px] top-9 h-px bg-slate-700/60" aria-hidden />
-        <div className="pointer-events-none absolute top-0 h-9 w-px bg-accent/80" style={{ left: `calc(7px + ${progress} * (100% - 14px))` }} aria-hidden />
+        <div className="absolute inset-x-[7px] top-9 h-px bg-line" aria-hidden />
+        <div className="pointer-events-none absolute top-0 h-9 w-px bg-fg/70" style={{ left: `calc(7px + ${progress} * (100% - 14px))` }} aria-hidden />
         <input
           type="range"
           className="scrubber absolute inset-x-0 top-9"
@@ -113,7 +122,7 @@ export default function Timeline({ incidents, coveredTypes, clock }: TimelinePro
           aria-label="Replay position"
           aria-valuetext={isLive ? 'Live' : formatUtcDateTime(t)}
         />
-        <div className="tnum pointer-events-none absolute inset-x-0 top-[3.1rem] h-3 px-[7px] text-[9px] text-slate-400" aria-hidden>
+        <div className="tnum pointer-events-none absolute inset-x-0 top-[3.1rem] h-3 px-[7px] font-mono text-[9px] text-fg-mute" aria-hidden>
           {tickLabels.map((tk) => (
             <span key={tk.label} className="absolute -translate-x-1/2" style={{ left: `calc(7px + ${tk.pct / 100} * (100% - 14px))` }}>{tk.label}</span>
           ))}

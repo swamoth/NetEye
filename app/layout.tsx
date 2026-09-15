@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#03060d',
+  themeColor: '#101010',
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`dark ${GeistSans.variable} ${GeistMono.variable}`}>
-      <body className="min-h-dvh overflow-hidden bg-ink-950 text-slate-100">
+      <body className="min-h-dvh overflow-hidden bg-paper text-fg">
         <a href="#incident-list" className="skip-link">Skip to incident list</a>
         {children}
       </body>

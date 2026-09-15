@@ -16,6 +16,7 @@ import { altitudeForSpanKm, centroid, haversineKm } from '@/app/utils/coordinate
 import { useOutages } from '@/app/hooks/useOutages';
 import { useReplayClock } from '@/app/hooks/useReplayClock';
 import { useGeoData } from '@/app/hooks/useGeoData';
+import { useReducedMotion } from '@/app/hooks/useReducedMotion';
 import { useWhoAmI } from '@/app/hooks/useWhoAmI';
 import { useAsnProfile } from '@/app/hooks/useAsnProfile';
 import { useRisLive } from '@/app/hooks/useRisLive';
@@ -32,18 +33,6 @@ import Timeline from './Timeline';
 import CommandPalette, { buildPaletteIndex } from './CommandPalette';
 import BootOverlay from './BootOverlay';
 import { Icon } from './ui';
-
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const apply = () => setReduced(mq.matches);
-    apply();
-    mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
-  }, []);
-  return reduced;
-}
 
 export default function App({ initial }: { initial: Snapshot | null }) {
   const feed = useOutages(initial);
@@ -351,7 +340,7 @@ export default function App({ initial }: { initial: Snapshot | null }) {
   }, [openAsn, select]);
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-ink-950 text-slate-100">
+    <div className="relative h-dvh w-full overflow-hidden bg-paper text-fg">
       <main aria-label="Globe">
         <Globe
           points={points}
@@ -370,7 +359,7 @@ export default function App({ initial }: { initial: Snapshot | null }) {
         />
       </main>
 
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(3,6,13,0.55)_100%)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.6)_100%)]" aria-hidden />
 
       <Header
         connection={feed.connection}
@@ -445,20 +434,21 @@ export default function App({ initial }: { initial: Snapshot | null }) {
 
       <CommandPalette open={paletteOpen} items={paletteItems} onClose={() => setPaletteOpen(false)} onOpenAsn={openAsn} />
 
-      <div className="pointer-events-none absolute bottom-[6.6rem] right-4 z-10 hidden items-center gap-2 text-[10px] text-slate-400 xl:flex" aria-hidden>
-        <span><span className="kbd">Ctrl</span>+<span className="kbd">K</span> search</span>
-        <span><span className="kbd">space</span> play</span>
-        <span><span className="kbd">L</span> live</span>
-        <span><span className="kbd">esc</span> close</span>
+      {/* Keyboard hints: a right-aligned column beside the timeline, so it fits the gutter. */}
+      <div className="pointer-events-none absolute bottom-4 right-4 z-10 hidden flex-col items-end gap-1.5 font-mono text-[10px] text-fg-mute xl:flex" aria-hidden>
+        <span className="inline-flex items-center gap-1">search <span className="kbd">Ctrl</span><span className="kbd">K</span></span>
+        <span className="inline-flex items-center gap-1">play <span className="kbd">space</span></span>
+        <span className="inline-flex items-center gap-1">live <span className="kbd">L</span></span>
+        <span className="inline-flex items-center gap-1">close <span className="kbd">esc</span></span>
       </div>
 
       {toast && (
-        <div role="status" className="glass pointer-events-none absolute left-1/2 top-[4.5rem] z-40 flex -translate-x-1/2 items-center gap-2 px-3 py-2 text-xs text-slate-100 motion-safe:animate-fadeUp">
+        <div role="status" className="bar pointer-events-none absolute left-1/2 top-[4.5rem] z-40 flex -translate-x-1/2 items-center gap-2 !rounded-full px-3.5 py-2 text-xs text-fg motion-safe:animate-fadeUp">
           <Icon name="check" className="h-3.5 w-3.5 text-emerald-300" /> {toast}
         </div>
       )}
 
-      <BootOverlay ready={globeReady} incidentCount={incidents.length} />
+      <BootOverlay ready={globeReady} incidentCount={incidents.length} countries={geo.countries} />
     </div>
   );
 }

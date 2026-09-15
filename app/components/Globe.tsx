@@ -198,8 +198,8 @@ export default function Globe({
           backgroundImageUrl="/night-sky.png"
           backgroundColor="rgba(0,0,0,0)"
           showAtmosphere
-          atmosphereColor="#3b82f6"
-          atmosphereAltitude={0.17}
+          atmosphereColor="#aab3c2"
+          atmosphereAltitude={0.15}
           rendererConfig={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
           onGlobeReady={handleReady}
           onGlobeClick={globeClick}
