@@ -62,6 +62,11 @@ export default function App({ initial }: { initial: Snapshot | null }) {
   const [toast, setToast] = useState<string | null>(null);
   const [extraCableId, setExtraCableId] = useState<string | null>(null);
   const [urlReady, setUrlReady] = useState(false);
+  // Plain visits get the Enter gate on the boot screen; deep links go straight to the globe.
+  const [introGate, setIntroGate] = useState(true);
+  // Incident the ASN explorer was opened from, so it can go back to it.
+  const [asnFrom, setAsnFrom] = useState<string | null>(null);
+  const selectedRef = useRef<string | null>(null);
   const focusKey = useRef(0);
 
   const profile = useAsnProfile(asnOpen);
@@ -89,6 +94,7 @@ export default function App({ initial }: { initial: Snapshot | null }) {
     if (s.incident) { setSelectedId(s.incident); setShowResolved(true); }
     if (s.asn) setAsnOpen(s.asn);
     if (s.pov) setInitialPov(s.pov);
+    setIntroGate(!(s.incident || s.asn || s.pov || s.t != null || s.q));
     setUrlReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -224,8 +230,11 @@ export default function App({ initial }: { initial: Snapshot | null }) {
     if (window.innerWidth < 768) setSidebarOpen(false);
   }, [byId, flyTo]);
 
+  useEffect(() => { selectedRef.current = selectedId; }, [selectedId]);
+
   const openAsn = useCallback((asn: number) => {
     setAsnOpen(asn);
+    setAsnFrom(selectedRef.current);
     setSelectedId(null);
     setExtraCableId(null);
     if (window.innerWidth < 768) setSidebarOpen(false);
@@ -233,9 +242,17 @@ export default function App({ initial }: { initial: Snapshot | null }) {
 
   const closeAsn = useCallback(() => {
     setAsnOpen(null);
+    setAsnFrom(null);
     setWatchBgp(false);
     flownAsn.current = null;
   }, []);
+
+  /** Close the explorer and reopen the incident it was opened from. */
+  const backFromAsn = useCallback(() => {
+    const id = asnFrom;
+    closeAsn();
+    if (id) setSelectedId(id);
+  }, [asnFrom, closeAsn]);
 
   useEffect(() => {
     if (!asnOpen || !profile.data || profile.data.asn !== asnOpen || flownAsn.current === asnOpen) return;
@@ -440,6 +457,7 @@ export default function App({ initial }: { initial: Snapshot | null }) {
           now={clock.now}
           onToggleWatch={() => setWatchBgp((w) => !w)}
           onClose={closeAsn}
+          onBack={asnFrom ? backFromAsn : undefined}
           onFlyTo={() => { const l = profile.data?.location; if (l) flyTo(l.lat, l.lng, 1.6); }}
           onCopyLink={copyLink}
           onOpenAsn={openAsn}
@@ -476,7 +494,7 @@ export default function App({ initial }: { initial: Snapshot | null }) {
         </div>
       )}
 
-      <BootOverlay ready={globeReady} incidentCount={incidents.length} countries={geo.countries} />
+      <BootOverlay ready={globeReady} incidentCount={incidents.length} countries={geo.countries} gate={introGate} />
     </div>
   );
 }

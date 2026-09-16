@@ -18,6 +18,8 @@ export interface AsnExplorerProps {
   now: number;
   onToggleWatch: () => void;
   onClose: () => void;
+  /** Present when the explorer was opened from an incident: returns to that incident. */
+  onBack?: () => void;
   onFlyTo: () => void;
   onCopyLink: () => void;
   onOpenAsn: (asn: number) => void;
@@ -35,6 +37,11 @@ export default function AsnExplorer(p: AsnExplorerProps) {
     <aside className="bar pointer-events-auto absolute bottom-[7.5rem] right-3 top-[4.25rem] z-20 flex w-[min(420px,calc(100vw-1.5rem))] flex-col overflow-clip motion-safe:animate-fadeUp md:right-4" aria-label="ASN explorer" aria-busy={p.profile.loading}>
       <div className="h-[2px] w-full bg-fg/80" aria-hidden />
       <div className="flex items-start gap-2 p-3 pb-2">
+        {p.onBack && (
+          <button type="button" className="group press -ml-0.5 -mt-0.5 rounded-full" onClick={p.onBack} aria-label="Back to the incident" title="Back to the incident">
+            <MetalSurface size={32}><Icon name="back" className="h-[15px] w-[15px]" /></MetalSurface>
+          </button>
+        )}
         <div className="min-w-0 flex-1">
           <div className="mono-label">Autonomous system</div>
           <h2 className="mt-0.5 truncate text-[15px] font-medium leading-snug tracking-[-0.01em] text-fg" title={title}>{title}</h2>
