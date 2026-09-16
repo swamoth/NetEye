@@ -5,8 +5,9 @@ Outages, BGP route leaks and hijacks, and DDoS activity from the last 24 hours, 
 shareable views and a documented API. Next.js 15, TypeScript, Tailwind, globe.gl.
 
 > **Real data only.** Every incident, count and chart comes from a live upstream feed: Cloudflare
-> Radar for incidents, RPKI statistics and ASN metadata; RIPEstat for prefixes, neighbours and
-> visibility; RIPE RIS Live for BGP updates. NetEye never estimates, models or simulates a value.
+> Radar for incidents, RPKI statistics and ASN metadata; IODA for country-level outage detections;
+> RIPEstat for prefixes, neighbours and visibility; RIPE RIS Live for BGP updates. NetEye never
+> estimates, models or simulates a value.
 > When a feed is unavailable the layer is absent and `/api/health` says why.
 
 ## What it does
@@ -55,6 +56,7 @@ shareable views and a documented API. Next.js 15, TypeScript, Tailwind, globe.gl
 | Source | Used for | Key | Cost |
 |---|---|---|---|
 | **Cloudflare Radar** | Outage annotations, BGP hijack and leak events, L3 DDoS origin/target shares, ASN metadata and estimated users, RPKI route statistics, anomaly history | `CLOUDFLARE_API_TOKEN` (free account, *Account → Radar → Read*) | free |
+| **IODA** (Georgia Tech) | Country-level outage detections: BGP-visible prefixes, active probing, darknet telescope and Google traffic signals, merged per country with the depth of each drop | none (`IODA_DISABLED=1` to turn off) | free |
 | **RIPEstat Data API** | ASN overview, announced prefixes, routing status and visibility, AS neighbours, "Am I affected?" lookups | none | free |
 | **RIPE RIS Live** | Real-time BGP updates for the ASN explorer | none | free |
 

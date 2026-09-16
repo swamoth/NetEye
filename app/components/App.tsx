@@ -10,9 +10,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Incident, IncidentType, Severity, Snapshot } from '@/app/utils/types';
 import { INCIDENT_TYPES, SEVERITIES } from '@/app/utils/types';
 import { DAY_MS, filterIncidents, isVisibleAt, sortIncidents, statusAt, summarize } from '@/app/utils/incidents';
-import { TYPE_META, withAlpha } from '@/app/utils/theme';
+import { SEVERITY_META, withAlpha } from '@/app/utils/theme';
 import { downloadText, exportFilename, toCsv } from '@/app/utils/export';
-import { altitudeForSpanKm, centroid, haversineKm } from '@/app/utils/coordinates';
+import { altitudeForSpanKm, arcClearanceFor, centroid, EARTH_RADIUS_KM, haversineKm, interpolate } from '@/app/utils/coordinates';
+import { formatNumber, formatPct } from '@/app/utils/format';
 import { useOutages } from '@/app/hooks/useOutages';
 import { useReplayClock } from '@/app/hooks/useReplayClock';
 import { useGeoData } from '@/app/hooks/useGeoData';
@@ -22,8 +23,9 @@ import { useAsnProfile } from '@/app/hooks/useAsnProfile';
 import { useRisLive } from '@/app/hooks/useRisLive';
 import { currentShareUrl, EMPTY_URL_STATE, readUrlState, useUrlStateWriter, type UrlState } from '@/app/hooks/useUrlState';
 import { CABLES } from '@/server/data/cables';
-import Globe, { type Focus, type GlobeLabel, type Pov } from './Globe';
-import { useGlobeLayers, type PathDatum } from './OutageMarker';
+import Globe, { type Focus, type Pov } from './Globe';
+import { prune, upsert, useGlobeLayers, type PathDatum } from './OutageMarker';
+import type { HtmlMarkerDatum } from './HtmlMarkers';
 import { useAsnLayers } from './AsnLayers';
 import Header from './Header';
 import Dashboard from './Dashboard';
@@ -60,6 +62,11 @@ export default function App({ initial }: { initial: Snapshot | null }) {
   const [toast, setToast] = useState<string | null>(null);
   const [extraCableId, setExtraCableId] = useState<string | null>(null);
   const [urlReady, setUrlReady] = useState(false);
+  // Plain visits get the Enter gate on the boot screen; deep links go straight to the globe.
+  const [introGate, setIntroGate] = useState(true);
+  // Incident the ASN explorer was opened from, so it can go back to it.
+  const [asnFrom, setAsnFrom] = useState<string | null>(null);
+  const selectedRef = useRef<string | null>(null);
   const focusKey = useRef(0);
 
   const profile = useAsnProfile(asnOpen);
@@ -87,6 +94,7 @@ export default function App({ initial }: { initial: Snapshot | null }) {
     if (s.incident) { setSelectedId(s.incident); setShowResolved(true); }
     if (s.asn) setAsnOpen(s.asn);
     if (s.pov) setInitialPov(s.pov);
+    setIntroGate(!(s.incident || s.asn || s.pov || s.t != null || s.q));
     setUrlReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -135,13 +143,38 @@ export default function App({ initial }: { initial: Snapshot | null }) {
 
   const selected = selectedId ? byId.get(selectedId) ?? null : null;
 
-  const globeLabel: GlobeLabel | null = useMemo(() => {
-    if (asnOpen && profile.data?.location) {
-      return { lat: profile.data.location.lat, lng: profile.data.location.lng, text: `AS${asnOpen}`, color: 'rgba(245,245,245,0.95)' };
+  // DOM markers: the selected incident (pin + a pill on each of its arcs), you, the open ASN.
+  // Datums are cached per id so globe.gl keeps the same elements between ticks.
+  const markerCache = useRef(new Map<string, HtmlMarkerDatum>());
+  const markers = useMemo(() => {
+    const out: HtmlMarkerDatum[] = [];
+    const keep = new Set<string>();
+    const put = (id: string, make: () => Omit<HtmlMarkerDatum, 'id'>) => {
+      keep.add(id);
+      out.push(upsert(markerCache.current, id, () => ({ id, ...make() }), (d) => Object.assign(d, make())));
+    };
+    if (selected) {
+      const sev = SEVERITY_META[selected.severity];
+      put(`pin:${selected.id}`, () => ({ kind: 'pin', lat: selected.location.lat, lng: selected.location.lng, altitude: sev.altitude + 0.012, text: selected.location.city ?? selected.location.country }));
+      if (statusAt(selected, t) !== 'resolved') {
+        selected.path?.forEach((seg, i) => {
+          const mid = interpolate(seg.from, seg.to, 0.5);
+          const theta = haversineKm(seg.from, seg.to) / EARTH_RADIUS_KM;
+          put(`arc:${selected.id}:${i}`, () => ({ kind: 'arc', lat: mid.lat, lng: mid.lng, altitude: arcClearanceFor(theta), text: arcPillText(selected, seg.label) }));
+        });
+      }
     }
-    if (!selected) return null;
-    return { lat: selected.location.lat, lng: selected.location.lng, text: selected.location.city ?? selected.location.country, color: withAlpha(TYPE_META[selected.type].glow, 0.95) };
-  }, [selected, asnOpen, profile.data]);
+    const me = who.data;
+    if (me && me.lat != null && me.lng != null) {
+      put('pin:you', () => ({ kind: 'pin', lat: me.lat!, lng: me.lng!, altitude: 0.05, text: me.asn ? `you · AS${me.asn}` : 'you' }));
+    }
+    if (asnOpen && profile.data?.location) {
+      const loc = profile.data.location;
+      put(`pin:asn:${asnOpen}`, () => ({ kind: 'pin', lat: loc.lat, lng: loc.lng, altitude: 0.075, text: `AS${asnOpen}` }));
+    }
+    prune(markerCache.current, keep);
+    return out;
+  }, [selected, t, who.data, asnOpen, profile.data]);
 
   const layers = useGlobeLayers(visible, {
     t,
@@ -197,8 +230,11 @@ export default function App({ initial }: { initial: Snapshot | null }) {
     if (window.innerWidth < 768) setSidebarOpen(false);
   }, [byId, flyTo]);
 
+  useEffect(() => { selectedRef.current = selectedId; }, [selectedId]);
+
   const openAsn = useCallback((asn: number) => {
     setAsnOpen(asn);
+    setAsnFrom(selectedRef.current);
     setSelectedId(null);
     setExtraCableId(null);
     if (window.innerWidth < 768) setSidebarOpen(false);
@@ -206,9 +242,17 @@ export default function App({ initial }: { initial: Snapshot | null }) {
 
   const closeAsn = useCallback(() => {
     setAsnOpen(null);
+    setAsnFrom(null);
     setWatchBgp(false);
     flownAsn.current = null;
   }, []);
+
+  /** Close the explorer and reopen the incident it was opened from. */
+  const backFromAsn = useCallback(() => {
+    const id = asnFrom;
+    closeAsn();
+    if (id) setSelectedId(id);
+  }, [asnFrom, closeAsn]);
 
   useEffect(() => {
     if (!asnOpen || !profile.data || profile.data.asn !== asnOpen || flownAsn.current === asnOpen) return;
@@ -352,7 +396,7 @@ export default function App({ initial }: { initial: Snapshot | null }) {
           initialPov={initialPov}
           countries={geo.countries}
           autoRotate={!selected && !hoveredId && !asnOpen && clock.isLive && !reducedMotion}
-          label={globeLabel}
+          markers={markers}
           onSelect={onGlobeSelect}
           onHover={setHoveredId}
           onReady={onGlobeReady}
@@ -413,6 +457,7 @@ export default function App({ initial }: { initial: Snapshot | null }) {
           now={clock.now}
           onToggleWatch={() => setWatchBgp((w) => !w)}
           onClose={closeAsn}
+          onBack={asnFrom ? backFromAsn : undefined}
           onFlyTo={() => { const l = profile.data?.location; if (l) flyTo(l.lat, l.lng, 1.6); }}
           onCopyLink={copyLink}
           onOpenAsn={openAsn}
@@ -449,9 +494,17 @@ export default function App({ initial }: { initial: Snapshot | null }) {
         </div>
       )}
 
-      <BootOverlay ready={globeReady} incidentCount={incidents.length} countries={geo.countries} />
+      <BootOverlay ready={globeReady} incidentCount={incidents.length} countries={geo.countries} gate={introGate} />
     </div>
   );
 }
 
 export type { Incident };
+
+/** Short data value for the pill on an arc, from the source's own metrics; the route otherwise. */
+function arcPillText(inc: Incident, fallback?: string): string {
+  const m = inc.metrics;
+  if (inc.type === 'ddos' && m.sharePct != null) return `${formatPct(m.sharePct, 1)} of L3 DDoS`;
+  if (inc.type === 'bgp' && m.prefixes != null) return `${formatNumber(m.prefixes)} prefix${m.prefixes === 1 ? '' : 'es'}`;
+  return fallback ?? inc.location.country;
+}

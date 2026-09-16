@@ -18,6 +18,25 @@ export interface LandMask {
   at(lat: number, lng: number): 0 | 1;
 }
 
+/**
+ * Make a ring's longitudes continuous: when consecutive points jump by more than 180 degrees the
+ * ring crosses the antimeridian (Fiji, eastern Russia), and drawn as-is it would paint a band
+ * around the whole map. Returns the unwrapped points and the longitude span.
+ */
+export function unwrapRing(ring: number[][]): { pts: [number, number][]; span: number } {
+  const pts: [number, number][] = [];
+  let offset = 0, prev = ring[0]?.[0] ?? 0, min = Infinity, max = -Infinity;
+  for (const [lng, lat] of ring) {
+    let l = lng + offset;
+    if (l - prev > 180) { offset -= 360; l -= 360; } else if (l - prev < -180) { offset += 360; l += 360; }
+    prev = l;
+    pts.push([l, lat]);
+    if (l < min) min = l;
+    if (l > max) max = l;
+  }
+  return { pts, span: max - min };
+}
+
 function tracePolygons(ctx: CanvasRenderingContext2D, geometry: Polygon | MultiPolygon, cols: number, rows: number) {
   const px = (lng: number) => ((lng + 180) / 360) * cols;
   const py = (lat: number) => ((90 - lat) / 180) * rows;
@@ -25,8 +44,23 @@ function tracePolygons(ctx: CanvasRenderingContext2D, geometry: Polygon | MultiP
   for (const poly of polys) {
     ctx.beginPath();
     for (const ring of poly) {
-      ring.forEach(([lng, lat], i) => (i ? ctx.lineTo(px(lng), py(lat)) : ctx.moveTo(px(lng), py(lat))));
-      ctx.closePath();
+      const { pts, span } = unwrapRing(ring);
+      // A ring that circles a pole (Antarctica) spans the full width and is correct as drawn.
+      // Every other ring is drawn unwrapped at three offsets; the canvas clips the copies outside.
+      const offsets = span >= 360 ? [0] : [-360, 0, 360];
+      const source = span >= 360 ? (ring as [number, number][]) : pts;
+      for (const off of offsets) {
+        source.forEach(([lng, lat], i) => (i ? ctx.lineTo(px(lng + off), py(lat)) : ctx.moveTo(px(lng + off), py(lat))));
+        ctx.closePath();
+      }
+      if (span >= 360) {
+        // The dataset clips the polar ring short of the pole (Natural Earth stops Antarctica at
+        // -85.6); the cap between that edge and the pole is the same continent, so fill it.
+        let edge = 0;
+        for (const [, lat] of ring) if (Math.abs(lat) > Math.abs(edge)) edge = lat;
+        if (edge < 0) ctx.rect(0, py(edge), cols, rows - py(edge));
+        else ctx.rect(0, 0, cols, py(edge));
+      }
     }
     ctx.fill('evenodd');
   }

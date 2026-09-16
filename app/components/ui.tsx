@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import {
-  ArrowRight, ArrowSquareOut, Broadcast, CaretRight, Check, Clock, Command, DownloadSimple, Eye, Funnel, Globe, Info,
+  ArrowRight, ArrowSquareOut, ArrowUUpLeft, Broadcast, CaretRight, Check, Clock, Command, DownloadSimple, Eye, Funnel, Globe, Info,
   Link, List, MagnifyingGlass, Pause, Play, Pulse, ShareNetwork, ShieldCheck, ShieldWarning, User, Warning, X, Graph, Rewind,
   type Icon as PhosphorIcon,
 } from '@phosphor-icons/react';
@@ -17,7 +17,7 @@ const ICONS = {
   eye: Eye, search: MagnifyingGlass, close: X, play: Play, pause: Pause, live: Broadcast, link: Link, download: DownloadSimple,
   external: ArrowSquareOut, user: User, signal: Pulse, chevron: CaretRight, filter: Funnel, clock: Clock, globe: Globe,
   command: Command, menu: List, 'arrow-right': ArrowRight, check: Check, warning: Warning, info: Info, network: ShareNetwork,
-  'shield-check': ShieldCheck, 'shield-warning': ShieldWarning, graph: Graph, rewind: Rewind,
+  'shield-check': ShieldCheck, 'shield-warning': ShieldWarning, graph: Graph, rewind: Rewind, back: ArrowUUpLeft,
 } satisfies Record<string, PhosphorIcon>;
 
 export type IconName = keyof typeof ICONS;

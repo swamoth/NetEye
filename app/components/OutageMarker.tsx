@@ -84,6 +84,10 @@ export interface PolygonDatum {
   /** Solid type colour for the globe surface's tint map. */
   tint: string;
   label: string;
+  /** Most severe active incident in the country: what a click on the country opens. */
+  incidentId: string;
+  /** Active incidents in the country. */
+  count: number;
 }
 
 export interface GlobeLayers {
@@ -151,7 +155,7 @@ export function useGlobeLayers(visible: Incident[], opts: LayerOptions): GlobeLa
     const outPaths: PathDatum[] = [];
     const outPolys: PolygonDatum[] = [];
     const keepP = new Set<string>(), keepR = new Set<string>(), keepA = new Set<string>(), keepPa = new Set<string>(), keepPo = new Set<string>();
-    const countryHits = new Map<string, { feature: CountryFeature; type: IncidentType; severityRank: number }>();
+    const countryHits = new Map<string, { feature: CountryFeature; type: IncidentType; severityRank: number; incidentId: string; count: number }>();
 
     for (const inc of visible) {
       const status = statusAt(inc, t) ?? inc.status;
@@ -220,7 +224,11 @@ export function useGlobeLayers(visible: Incident[], opts: LayerOptions): GlobeLa
         const feat = findCountry(inc.location.lat, inc.location.lng);
         if (feat) {
           const prev = countryHits.get(feat.id);
-          if (!prev || sev.rank > prev.severityRank) countryHits.set(feat.id, { feature: feat, type: inc.type, severityRank: sev.rank });
+          if (!prev) countryHits.set(feat.id, { feature: feat, type: inc.type, severityRank: sev.rank, incidentId: inc.id, count: 1 });
+          else {
+            prev.count += 1;
+            if (sev.rank > prev.severityRank) { prev.type = inc.type; prev.severityRank = sev.rank; prev.incidentId = inc.id; }
+          }
         }
       }
     }
@@ -229,8 +237,8 @@ export function useGlobeLayers(visible: Incident[], opts: LayerOptions): GlobeLa
       keepPo.add(id);
       const c = TYPE_META[hit.type].glow;
       outPolys.push(upsert(polygons.current, id,
-        () => ({ id, geometry: hit.feature.geometry, color: withAlpha(c, 0.05 + hit.severityRank * 0.02), stroke: withAlpha(c, 0.5), tint: c, label: hit.feature.name }),
-        (d) => { d.color = withAlpha(c, 0.05 + hit.severityRank * 0.02); d.stroke = withAlpha(c, 0.5); d.tint = c; }));
+        () => ({ id, geometry: hit.feature.geometry, color: withAlpha(c, 0.05 + hit.severityRank * 0.02), stroke: withAlpha(c, 0.5), tint: c, label: hit.feature.name, incidentId: hit.incidentId, count: hit.count }),
+        (d) => { d.color = withAlpha(c, 0.05 + hit.severityRank * 0.02); d.stroke = withAlpha(c, 0.5); d.tint = c; d.incidentId = hit.incidentId; d.count = hit.count; }));
     }
 
     if (you && you.lat != null && you.lng != null) {
