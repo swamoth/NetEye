@@ -1,0 +1,52 @@
+{
+  "name": "neteye",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Real-time internet outage visualization on an interactive 3D globe",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -n web,ws -c cyan,magenta \"next dev\" \"node server/websocket.js\"",
+    "dev:web": "next dev",
+    "dev:ws": "node server/websocket.js",
+    "build": "next build",
+    "start": "concurrently -n web,ws -c cyan,magenta \"next start\" \"node server/websocket.js\"",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "geist": "^1.7.2",
+    "metal-fx": "^2.0.10",
+    "next": "^15.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-globe.gl": "^2.33.0",
+    "three": "^0.186.0",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@types/geojson": "^7946.0.14",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.185.4",
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-specification": "^1.0.5",
+    "@types/ws": "^8.5.13",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.3.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

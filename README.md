@@ -1,168 +1,169 @@
-# NetEye - Real-Time Internet Outage Visualization
+# NetEye: live internet incidents on a globe
 
-A modern web application for tracking and visualizing internet outages, submarine cable disruptions, BGP routing anomalies, and DDoS attacks in real-time using an interactive 3D globe interface.
+Outages, BGP route leaks and hijacks, and DDoS activity from the last 24 hours, plotted live on a
+3D globe, with a replay scrubber, per-incident forensics, an ASN explorer with a live BGP stream,
+shareable views and a documented API. Next.js 15, TypeScript, Tailwind, globe.gl.
 
-## Overview
+> **Real data only.** Every incident, count and chart comes from a live upstream feed: Cloudflare
+> Radar for incidents, RPKI statistics and ASN metadata; RIPEstat for prefixes, neighbours and
+> visibility; RIPE RIS Live for BGP updates. NetEye never estimates, models or simulates a value.
+> When a feed is unavailable the layer is absent and `/api/health` says why.
 
-NetEye provides network engineers and infrastructure teams with a comprehensive view of global internet health. The application aggregates data from multiple sources and presents it through an intuitive 3D visualization, enabling rapid identification and analysis of network incidents.
+## What it does
 
-### Key Features
+- **Live 3D globe.** Night-lights Earth; incident markers sized by severity and coloured by type;
+  pulsing rings on active incidents; animated arcs for BGP hijacks and leaks (hijacker to victim,
+  leaker to upstream) and for DDoS origin to target flows; countries with active incidents
+  highlighted. Auto-rotates until you interact.
+- **Live feed with graceful degradation.** WebSocket diff stream every 5 s, automatic fallback to
+  HTTP polling and automatic reconnection. The header shows Live, Polling or Offline.
+- **24 h replay.** Scrub or play the last day at 1x to 300x. Every marker, ring, count and list
+  row is recomputed for that instant in the browser.
+- **Incident forensics.** Type, severity, status and source badges, cause, lifecycle timing,
+  the exact figures the source reported (prefixes, detector score, RIS peers, DDoS share),
+  networks involved with roles (victim, hijacker, leaker, upstream), and the event timeline.
+- **ASN explorer.** Open any autonomous system: announced prefixes, RIS visibility, neighbour
+  counts with the top upstreams and customers drawn as arcs, RPKI route-origin validation as a
+  stacked bar with the invalid count called out, routing anomalies of the last 7 days, and a
+  prefix sample. Drill from neighbour to neighbour.
+- **Live BGP stream.** One click streams announcements and withdrawals for routes the network
+  originates, straight from RIPE RIS Live into the browser: updates per second, peers and
+  collectors seen, the latest updates, and an arc on the globe from the collector that observed
+  each one.
+- **"Am I affected?"** Resolves your ISP and ASN through RIPEstat, highlights incidents touching
+  your network or country, and opens your own network in the explorer. Opt-in; the IP is masked
+  and never logged.
+- **Command palette** (`Ctrl/⌘ K` or `/`): incidents, any ASN (`AS13335`), cities, countries,
+  35 submarine cable routes, and actions.
+- **Shareable permalinks.** Camera, filters, search, selection, replay time and the open ASN
+  live in the URL.
+- **Export and feeds.** CSV or JSON of the filtered list, an RSS feed, REST and WebSocket APIs.
 
-- **Interactive 3D Globe** - Real-time visualization of network outages on a responsive WebGL globe
-- **Submarine Cable Monitoring** - Track undersea infrastructure status and cable cut incidents
-- **BGP Route Analysis** - Visualize routing path changes and autonomous system disruptions
-- **Incident Propagation** - Animated visualization showing how failures spread across regions
-- **Historical Replay** - Review and analyze incidents from the past 24 hours
-- **Detailed Incident Reports** - Comprehensive information available for each detected event
-- **Advanced Filtering** - Filter by incident type (outages, cable cuts, BGP issues, DDoS)
-- **Live Statistics Dashboard** - Real-time metrics and KPI monitoring
+## Technology
 
-## Technology Stack
+| Layer | Choice | Why |
+|---|---|---|
+| Framework | Next.js 15 (App Router), React 19, TypeScript | SSR of the initial snapshot puts the incident list in the first HTML; API routes host the REST layer and proxy the upstreams |
+| 3D | [globe.gl](https://github.com/vasturiano/globe.gl) via react-globe.gl (Three.js) | Points, rings, arcs, paths, polygons, labels and camera fly-to out of the box; `Globe.tsx` isolates it behind a plain data contract |
+| UI | Tailwind CSS 3, Geist Sans and Mono (`next/font/local`), Phosphor icons, metal-fx | Quiet monochrome chrome (near-black paper, hairlines, mono meta); colour reserved for the validated incident-type palette and status |
+| Realtime | `ws` server (`server/websocket.js`) with polling fallback; RIS Live directly in the browser | Diff fan-out every 5 s; no shared state between processes |
+| Geo | Natural Earth 1:110m via `world-atlas` and `topojson-client` | Country polygons and point-in-country lookup, served statically |
+| Tests | Vitest | Radar mappers against real payload fixtures, aggregator with injected adapters, geo math, filters and URL state |
 
-### Frontend
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript
-- **3D Graphics**: Three.js + React Three Fiber
-- **Styling**: Tailwind CSS
-- **State Management**: React Hooks
-- **Build Tool**: Next.js built-in
+## Data sources
 
-### Backend
-- **Runtime**: Node.js
-- **API**: Next.js API Routes
-- **Real-time**: WebSocket (Socket.io)
-- **Database**: PostgreSQL with TimescaleDB extension
-- **Cache**: Redis
+| Source | Used for | Key | Cost |
+|---|---|---|---|
+| **Cloudflare Radar** | Outage annotations, BGP hijack and leak events, L3 DDoS origin/target shares, ASN metadata and estimated users, RPKI route statistics, anomaly history | `CLOUDFLARE_API_TOKEN` (free account, *Account → Radar → Read*) | free |
+| **RIPEstat Data API** | ASN overview, announced prefixes, routing status and visibility, AS neighbours, "Am I affected?" lookups | none | free |
+| **RIPE RIS Live** | Real-time BGP updates for the ASN explorer | none | free |
 
-### Data Sources
-- Cloudflare Radar
-- RIPE NCC
-- Custom aggregation services
+Submarine cable *faults* have no free real-time feed, so that layer stays empty and its filter is
+disabled with a "no feed" label. The 35 cable routes in the palette are real infrastructure
+geometry (approximate landing coordinates) and are shown as routes, not as incidents.
 
-### Deployment
-- **Platform**: Vercel (Frontend + API Routes)
-- **Database**: Hosted PostgreSQL (e.g., Supabase, Railway)
-- **Cache**: Redis Cloud or Upstash
+## Quick start
 
-## Project Structure
+Requirements: Node.js 20 or newer, npm 9 or newer.
 
-```
-neteye/
-├── app/                          # Next.js App Router
-│   ├── components/               # React components
-│   │   ├── Globe.tsx            # 3D globe visualization
-│   │   ├── OutageMarker.tsx     # Incident markers on globe
-│   │   ├── Dashboard.tsx        # Statistics sidebar
-│   │   ├── OutageDetail.tsx     # Incident detail modal
-│   │   └── Timeline.tsx         # Historical playback controls
-│   ├── hooks/                   # Custom React hooks
-│   │   ├── useOutages.ts        # WebSocket connection management
-│   │   └── useGeoData.ts        # Geographic data processing
-│   ├── utils/                   # Utility functions
-│   │   ├── coordinates.ts       # Lat/long calculations
-│   │   ├── api.ts              # API client functions
-│   │   └── types.ts            # TypeScript type definitions
-│   ├── api/                     # API routes
-│   │   ├── outages/route.ts     # Outage data endpoints
-│   │   └── health/route.ts      # Health check endpoints
-│   └── page.tsx                 # Main application page
-├── server/                      # Server-side logic
-│   ├── websocket.js            # WebSocket server implementation
-│   └── aggregator.js           # Data aggregation from sources
-├── lib/                        # Shared utilities
-│   └── db.ts                   # Database connection
-├── public/                     # Static assets
-│   └── earth-texture.jpg       # Globe texture asset
-├── docs/                       # Documentation
-│   ├── architecture.md         # System architecture
-│   └── api-documentation.md    # API reference
-├── .env.local                  # Environment variables (local)
-├── .env.example                # Environment variables template
-├── .gitignore                  # Git ignore rules
-├── next.config.js              # Next.js configuration
-├── package.json                # Dependencies
-├── tsconfig.json              # TypeScript configuration
-└── README.md                   # This file
+```bash
+git clone https://github.com/swamoth/NetEye.git
+cd NetEye
+npm install
+cp .env.example .env.local          # add CLOUDFLARE_API_TOKEN
+npm run dev                          # Next.js on :3000 plus the WebSocket server on :3001
 ```
 
-## Prerequisites
+Open <http://localhost:3000>. Without a token the incident layers are empty (the dashboard says
+so); the ASN explorer still works on RIPEstat and RIS Live alone.
 
-Before running the project, ensure you have the following installed:
+### Getting a Cloudflare Radar token (free)
 
-- **Node.js**: Version 18.0.0 or higher
-- **npm**: Version 9.0.0 or higher (or yarn/pnpm)
-- **Git**: Latest version
+1. Create an account at <https://dash.cloudflare.com/sign-up> (no domain needed).
+2. My Profile → **API Tokens** → Create Token → *Custom token*.
+3. Permissions: **Account · Radar · Read**. Create it and copy it once.
+4. Put it in `.env.local` as `CLOUDFLARE_API_TOKEN=…` (never with a `NEXT_PUBLIC_` prefix).
+5. Verify: `curl -H "Authorization: Bearer $TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify`
 
-Optional (for full functionality):
-- **PostgreSQL**: Version 15+ (for local database)
-- **Redis**: Version 7+ (for local cache)
+### Scripts
 
-## Quick Start
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Next.js dev server and WebSocket server together |
+| `npm run dev:web` / `npm run dev:ws` | Either process alone (the app polls if the socket is absent) |
+| `npm run build` / `npm start` | Production build / run both processes |
+| `npm test` | Vitest suite |
+| `npm run lint` / `npm run typecheck` | ESLint (next/core-web-vitals) / `tsc --noEmit` |
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/swamoth/neteye.git
-   cd neteye
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env.local
-   ```
-   Edit `.env.local` and add your configuration values.
-
-4. **Run the development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open the application**
-   Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Environment Variables
-
-Create a `.env.local` file with the following variables:
+### Environment
 
 ```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/neteye
-
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# API Keys (for data sources)
-CLOUDFLARE_API_KEY=your_key_here
-RIPE_API_KEY=your_key_here
-
-# WebSocket
-WS_PORT=3001
+CLOUDFLARE_API_TOKEN=          # Cloudflare Radar (incident feed, RPKI stats, ASN metadata)
+RADAR_CACHE_TTL_MS=60000       # upstream cache for the incident feed
+WS_PORT=3001                   # WebSocket server port
+NEXT_PUBLIC_WS_URL=ws://localhost:3001
 ```
 
-## Development Guide
+See [`.env.example`](.env.example) for the full list.
 
-### Running Tests
+## Keyboard
 
-```bash
-npm test
+`Ctrl/⌘ K` or `/` search · `Space` play or pause replay · `L` go live · `F` toggle the list · `Esc` close
+
+## API
+
+```
+GET /api/outages?type=bgp&severity=high,critical&since=-6h&q=mumbai&format=csv
+GET /api/outages/:id
+GET /api/stats
+GET /api/asn/:asn          # RIPEstat + Radar profile: prefixes, RPKI, neighbours, anomalies
+GET /api/health            # per-source status, 207 when degraded or unconfigured
+GET /api/feed              # RSS 2.0
+GET /api/whoami            # RIPEstat-backed ASN and location lookup (IP masked)
+WS  ws://localhost:3001    # snapshot and diff stream
 ```
 
-### Building for Production
+## Project structure
 
-```bash
-npm run build
+```
+NetEye/
+├── app/
+│   ├── page.tsx                  # server component: SSR initial snapshot → <App/>
+│   ├── layout.tsx · globals.css · icon.svg
+│   ├── components/
+│   │   ├── App.tsx               # client shell: state, filters, selection, explorer, URL sync
+│   │   ├── Globe.tsx             # react-globe.gl wrapper (the only file that knows Three.js)
+│   │   ├── OutageMarker.tsx      # incidents → globe layers (stable datum identity)
+│   │   ├── AsnExplorer.tsx · AsnLayers.ts · charts.tsx
+│   │   ├── Header.tsx · Dashboard.tsx · OutageDetail.tsx · Timeline.tsx
+│   │   ├── CommandPalette.tsx · BootOverlay.tsx · ui.tsx
+│   ├── hooks/                    # useOutages · useReplayClock · useGeoData · useWhoAmI · useAsnProfile · useRisLive · useUrlState
+│   ├── utils/                    # types · incidents · coordinates · theme · format · export · api
+│   └── api/                      # outages · outages/[id] · stats · health · feed · whoami · asn/[asn]
+├── server/
+│   ├── aggregator.js             # merges live source adapters (createAggregator for tests)
+│   ├── websocket.js              # :3001 diff fan-out
+│   ├── geo.js                    # geolocation helpers
+│   ├── sources/cloudflareRadar.js
+│   └── data/                     # cities · cables · asns · countries · rrc (RIS collectors)
+├── lib/                          # incidents (server facade) · db (IncidentStore) · ripestat · radar
+├── db/schema.sql                 # optional TimescaleDB schema
+├── tests/                        # vitest
+└── public/                       # earth textures · data/countries-110m.json
 ```
 
-### Linting
+## Roadmap
+
+- IODA outage signals and TeleGeography cable GeoJSON as further adapters (real cable faults).
+- Paste-your-traceroute visualiser; watchlists with webhooks; Postgres history beyond 24 h.
+
+## Development
 
 ```bash
-npm run lint
+npm test            # unit tests
+npm run typecheck   # tsc
+npm run lint        # eslint
+npm run build       # production build (also type-checks)
 ```
 
 ## Team Collaboration Guide

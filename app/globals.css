@@ -1,0 +1,306 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens (quiet monochrome)
+ * - Surfaces: paper #101010, cards #0d0d0d, wells #0a0a0a. Never pure black, never a tint.
+ * - Lines: one hairline #404040; #5a5a5a when something is active.
+ * - Ink: #f5f5f5, #a0a0a0 soft, #787878 mute. Text never wears a data colour.
+ * - Type: Geist Sans for titles and prose, Geist Mono for meta, labels and numbers.
+ * - Radius: panels 16px, tiles 10px, controls 8px, chips pill.
+ * - Motion: 200ms cubic-bezier(0.16,1,0.3,1); everything respects prefers-reduced-motion.
+ * - Focus: one 2px soft-white outline everywhere.
+ */
+:root {
+  color-scheme: dark;
+  --ease-house: cubic-bezier(0.16, 1, 0.3, 1);
+  --ring: rgba(245, 245, 245, 0.7);
+}
+
+html,
+body {
+  height: 100%;
+  background: #101010;
+  color: #f5f5f5;
+  overscroll-behavior: none;
+}
+
+body {
+  @apply font-sans antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'ss01', 'cv01';
+}
+
+::selection {
+  background: #f5f5f5;
+  color: #000;
+}
+
+/* Skip link for keyboard users - visible only when focused. */
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-block focus:border focus:border-line focus:bg-paper-2 focus:px-3 focus:py-2 focus:text-sm focus:text-fg focus:outline-none;
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  button,
+  [role='button'] {
+    touch-action: manipulation;
+  }
+}
+
+@layer components {
+  /* Floating card: near-black paper, one hairline, light blur. */
+  .bar {
+    background: rgba(13, 13, 13, 0.92);
+    border: 1px solid theme('colors.line.DEFAULT');
+    border-radius: 16px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .bar {
+      background: #0d0d0d;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+  }
+
+  /* Inset tile inside a card (stats, facts, list rows). */
+  .tile {
+    @apply rounded-tile border border-line-soft bg-well;
+  }
+
+  /* Pill text button: ink on paper, no fill until hover. */
+  .btn {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-paper-2/70 px-3 py-1.5 text-xs text-fg-soft transition-[color,border-color,background-color,transform] duration-200 ease-house hover:border-line-strong hover:bg-paper-3 hover:text-fg active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40;
+  }
+  .btn[aria-pressed='true'],
+  .btn.is-on {
+    @apply border-line-strong bg-white/[0.06] text-fg;
+  }
+  /* White pill for the one primary action on a surface. */
+  .btn-primary {
+    @apply inline-flex items-center gap-1.5 rounded-full bg-fg px-3 py-1.5 text-xs font-medium text-black transition-[background-color,transform] duration-200 ease-house hover:bg-white active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40;
+  }
+
+  /* Filter chip: hairline pill, fills when on. */
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-transparent px-2.5 py-1 text-[11px] font-medium leading-none text-fg-soft transition-[background-color,border-color,color,transform] duration-200 ease-house select-none;
+  }
+  button.chip {
+    @apply hover:border-line-strong hover:text-fg active:scale-[0.98];
+  }
+  .chip.is-on {
+    @apply border-line-strong bg-white/[0.06] text-fg;
+  }
+
+  /* Key cap. */
+  .kbd {
+    @apply inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-[5px] border border-line bg-white/[0.04] px-1 font-mono text-[10px] leading-none text-fg-mute;
+  }
+
+  /* Section label: small mono, tracked, muted. */
+  .mono-label {
+    @apply font-mono text-[10.5px] uppercase tracking-[0.12em] text-fg-mute;
+  }
+
+  /* Text input. */
+  .field {
+    @apply w-full rounded-tile border border-line bg-well py-1.5 text-xs text-fg placeholder:text-fg-mute transition-colors duration-200 ease-house focus:border-line-strong focus:outline-none;
+  }
+
+  /* Lists where the hovered row stays bright and its siblings step back. */
+  .dim-list:hover > .dim-row {
+    opacity: 0.55;
+  }
+  .dim-list:hover > .dim-row:hover,
+  .dim-list:hover > .dim-row.is-selected {
+    opacity: 1;
+  }
+  .dim-row {
+    transition: opacity 240ms var(--ease-house);
+  }
+
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+  }
+  .scroll-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scroll-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+  }
+  .scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Numbers that align in columns. Stat-tile values stay proportional. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /*
+   * Metal icon button, CSS edition: a dark disc inside a brushed, faintly spectral rim.
+   * Rendered before hydration, without WebGL2 and under reduced motion; MetalSurface.tsx
+   * swaps in the metal-fx shader ring otherwise.
+   */
+  .metal-btn {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    color: theme('colors.fg.soft');
+    background: radial-gradient(120% 120% at 50% 18%, #2e2e2e 0%, #1c1c1c 48%, #121212 100%);
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 0 0 1px rgba(0, 0, 0, 0.5),
+      0 0 18px rgba(255, 255, 255, 0.05);
+    transition: color 200ms var(--ease-house), transform 200ms var(--ease-house), box-shadow 200ms var(--ease-house);
+  }
+  .metal-btn::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 2px;
+    background: conic-gradient(
+      from 215deg,
+      #474747 0deg,
+      #97a6c4 38deg,
+      #3b3b3b 92deg,
+      #a48f7c 148deg,
+      #2f2f2f 198deg,
+      #c3c6cc 252deg,
+      #4a4a4a 306deg,
+      #474747 360deg
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  .metal-btn > * {
+    position: relative;
+  }
+  /* metal-fx paints the ring and disc itself; the wrapper only needs to stay round. */
+  .metal-live {
+    overflow: visible;
+    border-radius: 999px;
+  }
+  /* Press feel for any element that hosts a metal surface. */
+  .press {
+    @apply transition-transform duration-200 ease-house active:scale-[0.96];
+  }
+
+  /* Thin ring loader: one bright arc on a faint track. */
+  .ring-loader {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1.5px solid rgba(245, 245, 245, 0.14);
+    border-top-color: theme('colors.fg.DEFAULT');
+    animation: ring-spin 900ms linear infinite;
+  }
+  @keyframes ring-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+/* globe.gl hover tooltips */
+.scene-tooltip {
+  pointer-events: none;
+  font-family: inherit !important;
+  font-size: 12px !important;
+  color: #f5f5f5 !important;
+  background: rgba(13, 13, 13, 0.94) !important;
+  border: 1px solid #404040;
+  border-radius: 10px;
+  padding: 8px 10px !important;
+  max-width: 300px;
+  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.9);
+}
+.scene-tooltip .tt-title {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.scene-tooltip .tt-meta {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  color: #a0a0a0;
+  font-size: 10.5px;
+}
+.scene-tooltip .tt-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* timeline scrubber */
+input[type='range'].scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+input[type='range'].scrubber::-webkit-slider-runnable-track,
+input[type='range'].scrubber::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+input[type='range'].scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 999px;
+  background: #f5f5f5;
+  border: 2px solid #0d0d0d;
+  box-shadow: 0 0 0 1px #404040;
+}
+input[type='range'].scrubber::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #f5f5f5;
+  border: 2px solid #0d0d0d;
+  box-shadow: 0 0 0 1px #404040;
+}
+input[type='range'].scrubber:focus-visible {
+  outline: none;
+}
+input[type='range'].scrubber:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* Motion respects the user's preference: keep state visible, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
