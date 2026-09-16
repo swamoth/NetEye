@@ -137,7 +137,7 @@ export default function App({ initial }: { initial: Snapshot | null }) {
 
   const globeLabel: GlobeLabel | null = useMemo(() => {
     if (asnOpen && profile.data?.location) {
-      return { lat: profile.data.location.lat, lng: profile.data.location.lng, text: `AS${asnOpen}`, color: 'rgba(56,189,248,0.95)' };
+      return { lat: profile.data.location.lat, lng: profile.data.location.lng, text: `AS${asnOpen}`, color: 'rgba(245,245,245,0.95)' };
     }
     if (!selected) return null;
     return { lat: selected.location.lat, lng: selected.location.lng, text: selected.location.city ?? selected.location.country, color: withAlpha(TYPE_META[selected.type].glow, 0.95) };
@@ -350,6 +350,7 @@ export default function App({ initial }: { initial: Snapshot | null }) {
           polygons={layers.polygons}
           focus={focus}
           initialPov={initialPov}
+          countries={geo.countries}
           autoRotate={!selected && !hoveredId && !asnOpen && clock.isLive && !reducedMotion}
           label={globeLabel}
           onSelect={onGlobeSelect}
@@ -359,7 +360,7 @@ export default function App({ initial }: { initial: Snapshot | null }) {
         />
       </main>
 
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.6)_100%)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgba(0,0,0,0.45)_100%)]" aria-hidden />
 
       <Header
         connection={feed.connection}

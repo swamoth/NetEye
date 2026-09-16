@@ -4,7 +4,8 @@
  * The world as a shimmering ASCII field.
  *
  * Land comes from the same Natural Earth polygons the globe uses (rasterised once into a
- * cell mask with an equirectangular projection), so this is real geography, not a texture.
+ * cell mask with an equirectangular projection, see utils/landMask.ts), so this is real
+ * geography, not a texture.
  * Value noise drifts over it: land cells glow through the character ramp, ocean cells stay
  * mostly empty with a sparse drift, and the pointer lifts whatever it passes over.
  *
@@ -15,6 +16,7 @@
 import { useMemo, useRef, type HTMLAttributes } from 'react';
 import type { CountryFeature } from '@/app/hooks/useGeoData';
 import { useCanvasAnimation } from '@/app/hooks/useCanvasAnimation';
+import { landMask, type LandMask } from '@/app/utils/landMask';
 
 const FONT = 'var(--font-geist-mono), ui-monospace, monospace';
 const RAMP = ' .:-=+*#%@';
@@ -38,34 +40,6 @@ function valueNoise(x: number, y: number): number {
 }
 const rgba = (c: [number, number, number], a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 
-/** Rasterise country polygons into a cols x rows land mask (1 = land). */
-function landMask(countries: CountryFeature[], cols: number, rows: number): Uint8Array | null {
-  if (!countries.length || cols < 2 || rows < 2 || typeof document === 'undefined') return null;
-  const off = document.createElement('canvas');
-  off.width = cols;
-  off.height = rows;
-  const ctx = off.getContext('2d', { willReadFrequently: true });
-  if (!ctx) return null;
-  ctx.fillStyle = '#fff';
-  const px = (lng: number) => ((lng + 180) / 360) * cols;
-  const py = (lat: number) => ((90 - lat) / 180) * rows;
-  for (const c of countries) {
-    const polys = c.geometry.type === 'Polygon' ? [c.geometry.coordinates] : c.geometry.coordinates;
-    for (const poly of polys) {
-      ctx.beginPath();
-      for (const ring of poly) {
-        ring.forEach(([lng, lat], i) => (i ? ctx.lineTo(px(lng), py(lat)) : ctx.moveTo(px(lng), py(lat))));
-        ctx.closePath();
-      }
-      ctx.fill('evenodd');
-    }
-  }
-  const data = ctx.getImageData(0, 0, cols, rows).data;
-  const mask = new Uint8Array(cols * rows);
-  for (let i = 0; i < mask.length; i++) mask[i] = data[i * 4 + 3] > 96 ? 1 : 0;
-  return mask;
-}
-
 export interface AsciiWorldProps extends HTMLAttributes<HTMLDivElement> {
   countries: CountryFeature[];
   /** Cell width in px; height is 1.15x. */
@@ -75,7 +49,7 @@ export interface AsciiWorldProps extends HTMLAttributes<HTMLDivElement> {
 export default function AsciiWorld({ countries, cell = 10, className = '', ...rest }: AsciiWorldProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const maskRef = useRef<{ key: string; mask: Uint8Array | null }>({ key: '', mask: null });
+  const maskRef = useRef<{ key: string; mask: LandMask | null }>({ key: '', mask: null });
   const version = useMemo(() => countries.length, [countries]);
 
   useCanvasAnimation(
@@ -109,7 +83,7 @@ export default function AsciiWorld({ countries, cell = 10, className = '', ...re
             const dx = px - pointer.x, dy = py - pointer.y;
             n += Math.exp(-(dx * dx + dy * dy) / (90 * 90)) * 0.55;
           }
-          const land = mask ? mask[row * cols + col] === 1 : false;
+          const land = mask ? mask.data[row * cols + col] === 1 : false;
           let k: number;
           if (mask) {
             if (land) k = 0.35 + 0.65 * Math.min(1, n);

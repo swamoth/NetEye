@@ -5,7 +5,7 @@ import type { CountryFeature } from '@/app/hooks/useGeoData';
 import AsciiWorld from './AsciiWorld';
 
 /**
- * Boot screen shown while the globe chunk and textures load: the world drawn in ASCII from the
+ * Boot screen shown while the globe chunk loads and the dotted surface is painted: the world in ASCII from the
  * same land polygons the globe will render, a thin ring loader and a mono status line. Fades
  * out once globe.gl reports ready and unmounts after the transition.
  */
@@ -42,7 +42,7 @@ export default function BootOverlay({ ready, incidentCount, countries }: { ready
         </div>
         {slow && !ready && (
           <div className="mt-4 max-w-xs font-mono text-[10.5px] leading-relaxed text-fg-mute">
-            still loading. the textures are about 2 MB on a first visit. if nothing appears, WebGL may be disabled in this browser.
+            still loading. the 3D engine is about 1 MB on a first visit. if nothing appears, WebGL may be disabled in this browser.
           </div>
         )}
       </div>

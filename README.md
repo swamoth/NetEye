@@ -149,7 +149,8 @@ NetEye/
 ├── lib/                          # incidents (server facade) · db (IncidentStore) · ripestat · radar
 ├── db/schema.sql                 # optional TimescaleDB schema
 ├── tests/                        # vitest
-└── public/                       # earth textures · data/countries-110m.json
+├── app/globe/                    # dotEarthMaterial (COBE-style lattice shader) · fibonacci (lattice maths)
+└── public/data/                  # countries-110m.json (Natural Earth): country layer, ASCII boot world and the globe surface
 ```
 
 ## Roadmap
