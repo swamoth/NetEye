@@ -32,3 +32,7 @@ yarn-error.log*
 
 # tests
 coverage/
+
+# cloudflare worker local secrets
+.dev.vars
+.wrangler/

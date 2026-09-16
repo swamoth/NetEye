@@ -196,7 +196,7 @@ function mapCountryOutages(events, alerts, now) {
         link: `https://ioda.inetintel.cc.gatech.edu/country/${cc}?from=${Math.floor(c.start / 1000)}&until=${Math.floor((end || now) / 1000)}`,
         startedAt: iso(c.start),
         resolvedAt: end ? iso(end) : undefined,
-        updatedAt: iso(end || Math.min(now, c.end)),
+        updatedAt: iso(end || c.end), // the reported end grows only when IODA re-runs, so diffs stay quiet
         timeline,
       });
     }
@@ -215,10 +215,12 @@ async function fetchIncidents(now = Date.now()) {
     return { incidents: [], status: 'disabled', coveredTypes: [], latencyMs: null, lastPoll: null, error: 'IODA_DISABLED is set' };
   }
   const started = Date.now();
-  const until = Math.floor(now / 1000);
+  // Round the window to the minute so the cache key is stable between ticks; otherwise every
+  // call would carry a new `until` and bypass the 60 s cache.
+  const until = Math.floor(now / MIN_MS) * 60;
   const [events, alerts] = await Promise.allSettled([
-    iodaGet('/outages/events', { from: Math.floor((now - DAY_MS) / 1000), until, entityType: 'country', limit: 500 }),
-    iodaGet('/outages/alerts', { from: Math.floor((now - ALERT_LOOKBACK_MS) / 1000), until, entityType: 'country', limit: 2000 }),
+    iodaGet('/outages/events', { from: until - DAY_MS / 1000, until, entityType: 'country', limit: 500 }),
+    iodaGet('/outages/alerts', { from: until - ALERT_LOOKBACK_MS / 1000, until, entityType: 'country', limit: 2000 }),
   ]);
 
   lastPoll = iso(Date.now());

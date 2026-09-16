@@ -162,30 +162,40 @@ NetEye/
 
 ## Deploy
 
-Two services, no code change: the Next.js app on Vercel and the WebSocket server on a host
-that keeps a Node process alive. The browser falls back to HTTP polling every 15 s whenever the
-socket is unreachable, so the app stays live even while the socket host sleeps.
+Two services, both free: the Next.js app on Vercel and the WebSocket feed on Cloudflare Workers
+(a Durable Object holds the connections and runs the 5 s tick as an alarm, so nothing sleeps
+and nothing runs while no one is connected). The browser falls back to HTTP polling every 15 s
+whenever the socket is unreachable.
 
-**1. WebSocket server on Koyeb (free instance)**
+**1. Feed on Cloudflare Workers** (free plan, no card)
 
-- New Web Service from this GitHub repository, builder: Buildpack (Node), run command
-  `node server/websocket.js`.
-- Environment: `CLOUDFLARE_API_TOKEN` (the socket server runs the same aggregator and needs
-  the token too). Koyeb injects `PORT`; the server listens on it.
-- Health check: HTTP `GET /healthz` on the exposed port.
-- Note the public host, e.g. `neteye-ws-<you>.koyeb.app`. The free instance sleeps after an
-  hour without traffic and wakes on the next connection.
+```bash
+npx wrangler login                                    # opens the browser once
+npx wrangler secret put RADAR_API_TOKEN --config workers/feed/wrangler.toml   # paste the Radar token
+npm run worker:deploy                                 # prints https://neteye-feed.<account>.workers.dev
+```
 
-**2. App on Vercel (Hobby)**
+Check: `https://neteye-feed.<account>.workers.dev/healthz` returns `{"ok":true,...}`.
+Local run: copy `workers/feed/.dev.vars.example` to `.dev.vars`, then `npm run worker:dev`
+(`ws://localhost:8787`). The secret is named `RADAR_API_TOKEN` on purpose: wrangler itself uses
+`CLOUDFLARE_API_TOKEN` for its login, and the two must not be confused.
 
-- Import the repository. Framework preset: Next.js. No build settings to change.
-- Environment variables (set before the first build): `CLOUDFLARE_API_TOKEN`,
-  `NEXT_PUBLIC_WS_URL=wss://neteye-ws-<you>.koyeb.app`. `NEXT_PUBLIC_` values are inlined at
-  build time, so a change needs a redeploy.
-- Open the deployment. The header shows "Live" when the socket connects, "Polling" otherwise.
-  `/api/health` lists both sources.
+**2. App on Vercel** (Hobby, no card)
 
-`IODA_DISABLED=1` turns the IODA source off on either service.
+- Import the repository. Framework preset: Next.js, nothing to change.
+- Environment variables, set before the first build: `CLOUDFLARE_API_TOKEN` (the Radar token)
+  and `NEXT_PUBLIC_WS_URL=wss://neteye-feed.<account>.workers.dev`. `NEXT_PUBLIC_` values are
+  inlined at build time, so a change needs a redeploy.
+- Open the deployment. The header shows "Live" when the socket connects, "Polling" otherwise,
+  and `/api/health` lists both sources.
+
+`server/websocket.js` remains the local and self-hosted socket server (`npm run dev`,
+`npm start`); it speaks the same protocol as the Worker. `IODA_DISABLED=1` turns the IODA
+source off on any of them.
+
+**Updating later**: data logic lives in `server/` and is shared by the Node server and the
+Worker. A new source or a mapping change is one edit there, then `npm run worker:deploy` for
+the feed and a push to `main` for the app.
 
 ## Development
 

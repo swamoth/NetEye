@@ -1,0 +1,24 @@
+# NetEye incident feed: WebSocket fan-out on Cloudflare Workers + Durable Objects (free plan).
+# Deploy:  npm run worker:deploy      Local:  npm run worker:dev  (ws://localhost:8787)
+# Secret:  npx wrangler secret put RADAR_API_TOKEN --config workers/feed/wrangler.toml
+name = "neteye-feed"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+# nodejs_compat gives the adapters process.env (populated from vars and secrets).
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[vars]
+WS_TICK_MS = "5000"
+# IODA_DISABLED = "1"
+
+[durable_objects]
+bindings = [{ name = "FEED", class_name = "FeedRoom" }]
+
+# Free plan Durable Objects must use the SQLite storage class.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["FeedRoom"]
+
+[observability]
+enabled = true

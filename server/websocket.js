@@ -37,6 +37,7 @@ for (const file of ['.env.local', '.env']) {
 
 const { WebSocketServer, WebSocket } = require('ws');
 const aggregator = require('./aggregator');
+const { diffIncidents } = require('./feedDiff');
 
 const PORT = Number(process.env.PORT || process.env.WS_PORT || 3001);
 const TICK_MS = Number(process.env.WS_TICK_MS || 5000);
@@ -70,11 +71,6 @@ function broadcast(msg) {
   for (const client of wss.clients) if (client.readyState === WebSocket.OPEN) client.send(data);
 }
 
-/** Cheap change detection: status/metrics/timeline changes all bump updatedAt or status. */
-function changed(prev, next) {
-  return prev.updatedAt !== next.updatedAt || prev.status !== next.status || prev.severity !== next.severity;
-}
-
 async function tick() {
   let snap;
   try {
@@ -83,19 +79,11 @@ async function tick() {
     log('snapshot failed:', err.message);
     return;
   }
-  const current = new Map(snap.incidents.map((i) => [i.id, i]));
-  const added = [];
-  const updated = [];
-  for (const inc of snap.incidents) {
-    const prev = last.get(inc.id);
-    if (!prev) added.push(inc);
-    else if (changed(prev, inc)) updated.push(inc);
-  }
-  const removed = [...last.keys()].filter((id) => !current.has(id));
+  const { added, updated, removed, current, empty } = diffIncidents(last, snap.incidents);
   last = current;
   lastSources = snap.sources;
 
-  if (added.length || updated.length || removed.length) {
+  if (!empty) {
     broadcast({ type: 'update', channel: 'incidents', now: snap.now, added, updated, removed, sources: snap.sources });
     if (added.length || removed.length) log(`update → +${added.length} ~${updated.length} -${removed.length} (clients: ${wss.clients.size})`);
   }
