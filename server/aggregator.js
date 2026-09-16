@@ -14,6 +14,7 @@
  */
 
 const cloudflareRadar = require('./sources/cloudflareRadar');
+const ioda = require('./sources/ioda');
 
 const WINDOW_MS = 24 * 60 * 60 * 1000;
 const TYPES = ['outage', 'bgp', 'ddos', 'cable_cut'];
@@ -35,7 +36,7 @@ function statusAt(inc, t) {
  * @param {{ sources?: Array<{ id: string, name: string, types: string[], fetchIncidents: (now: number) => Promise<any> }> }} [options]
  */
 function createAggregator(options = {}) {
-  const sources = options.sources || [cloudflareRadar];
+  const sources = options.sources || [cloudflareRadar, ioda];
 
   async function collect(now) {
     const results = await Promise.all(sources.map(async (src) => {

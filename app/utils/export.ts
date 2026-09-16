@@ -3,7 +3,7 @@ import type { Incident } from './types';
 export const CSV_COLUMNS = [
   'id', 'type', 'severity', 'status', 'title', 'city', 'country', 'country_code', 'region', 'lat', 'lng',
   'started_at', 'mitigating_at', 'resolved_at', 'updated_at', 'affected_asns', 'prefixes', 'detector_score',
-  'ris_peers', 'ddos_share_pct', 'aggregated', 'cause', 'source', 'confidence', 'link',
+  'ris_peers', 'ddos_share_pct', 'signals', 'drop_pct', 'ioda_score', 'aggregated', 'cause', 'source', 'confidence', 'link',
 ] as const;
 
 function csvCell(v: unknown): string {
@@ -17,7 +17,7 @@ export function incidentToRow(inc: Incident): (string | number | boolean | null 
     inc.id, inc.type, inc.severity, inc.status, inc.title, inc.location.city, inc.location.country, inc.location.countryCode,
     inc.location.region, inc.location.lat, inc.location.lng, inc.startedAt, inc.mitigatingAt, inc.resolvedAt, inc.updatedAt,
     inc.affectedASNs.map((a) => `AS${a.asn}`).join(' '), inc.metrics.prefixes, inc.metrics.confidence, inc.metrics.peers,
-    inc.metrics.sharePct, inc.aggregated ?? false, inc.cause, inc.source, inc.confidence, inc.link,
+    inc.metrics.sharePct, inc.metrics.signals?.join(' '), inc.metrics.drop, inc.metrics.score, inc.aggregated ?? false, inc.cause, inc.source, inc.confidence, inc.link,
   ];
 }
 

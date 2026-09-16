@@ -6,7 +6,7 @@
 export type IncidentType = 'outage' | 'bgp' | 'ddos' | 'cable_cut';
 export type Severity = 'low' | 'medium' | 'high' | 'critical';
 export type IncidentStatus = 'active' | 'mitigating' | 'resolved';
-export type SourceId = 'cloudflare_radar' | (string & {});
+export type SourceId = 'cloudflare_radar' | 'ioda' | (string & {});
 export type AsnRole = 'origin' | 'upstream' | 'victim' | 'hijacker' | 'leaker';
 export type ArcKind = 'reroute' | 'attack' | 'cable';
 
@@ -70,6 +70,12 @@ export interface IncidentMetrics {
   peers?: number;
   /** DDoS (Radar): share of globally mitigated L3 bytes, trailing 24h */
   sharePct?: number;
+  /** Outage (IODA): detection score reported by IODA */
+  score?: number;
+  /** Outage (IODA): signals that dropped, e.g. BGP, active probing */
+  signals?: string[];
+  /** Outage (IODA): deepest drop, percent below the recent median */
+  drop?: number;
 }
 
 export type TimelineEventType = 'detected' | 'confirmed' | 'escalated' | 'mitigating' | 'resolved' | 'update';

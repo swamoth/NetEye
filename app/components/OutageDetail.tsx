@@ -30,6 +30,9 @@ export default function OutageDetail({ incident: inc, t, mine, onClose, onFlyTo,
   if (inc.metrics.peers != null) facts.push({ label: 'RIS peers observing', value: formatNumber(inc.metrics.peers) });
   if (inc.metrics.events != null && inc.metrics.events > 1) facts.push({ label: 'Detections in 24h', value: formatNumber(inc.metrics.events) });
   if (inc.metrics.sharePct != null) facts.push({ label: 'Share of global L3 DDoS bytes', value: formatPct(inc.metrics.sharePct, 1) });
+  if (inc.metrics.signals?.length) facts.push({ label: 'Signals that dropped', value: inc.metrics.signals.join(', ') });
+  if (inc.metrics.drop != null) facts.push({ label: 'Deepest drop', value: `${inc.metrics.drop}% below the recent median` });
+  if (inc.metrics.score != null) facts.push({ label: 'IODA score', value: formatNumber(inc.metrics.score) });
   if (inc.cause) facts.push({ label: 'Cause', value: titleCase(inc.cause) });
   facts.push({ label: 'Source confidence', value: formatPct(inc.confidence * 100) });
 
