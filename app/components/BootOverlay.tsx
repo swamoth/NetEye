@@ -5,6 +5,7 @@ import type { CountryFeature } from '@/app/hooks/useGeoData';
 import AsciiWorld from './AsciiWorld';
 import MetalSurface from './MetalSurface';
 import { Icon } from './ui';
+import { GlobeMark } from './Logo';
 
 /**
  * Boot screen: the world in ASCII from the same land polygons the globe renders, a ring loader
@@ -59,7 +60,10 @@ export default function BootOverlay({ ready, incidentCount, countries, gate }: {
         ) : (
           <span className="ring-loader" aria-hidden />
         )}
-        <div className="mt-5 text-[15px] font-medium tracking-[-0.01em] text-fg">NetEye</div>
+        <div className="mt-5 flex items-center gap-2 text-[15px] font-medium tracking-[-0.01em] text-fg">
+          <GlobeMark className="h-5 w-5 text-fg-soft" />
+          NetEye
+        </div>
         <div className="mt-1 font-mono text-[11px] text-fg-mute">
           {showEnter ? (
             <>press <span className="kbd">enter</span> · {incidentCount ? `${incidentCount} incidents ready` : 'no incidents in the feed'}</>

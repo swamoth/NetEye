@@ -5,6 +5,7 @@ import { formatRelative, formatUtcTime } from '@/app/utils/format';
 import { TYPE_META } from '@/app/utils/theme';
 import { Dot, Icon } from './ui';
 import MetalSurface from './MetalSurface';
+import { GlobeMark } from './Logo';
 
 interface HeaderProps {
   connection: ConnectionState;
@@ -49,7 +50,7 @@ export default function Header(p: HeaderProps) {
       <div className="flex min-w-0 items-center gap-3">
         <span aria-hidden>
           <MetalSurface size={32} tone="bright">
-            <Icon name="eye" className="h-[15px] w-[15px]" />
+            <GlobeMark className="h-[18px] w-[18px]" />
           </MetalSurface>
         </span>
         <div className="min-w-0 leading-tight">

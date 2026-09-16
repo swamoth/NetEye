@@ -7,11 +7,11 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "concurrently -n web,ws -c cyan,magenta \"next dev\" \"node server/websocket.js\"",
+    "dev": "concurrently -n web,ws -c cyan,magenta \"next dev\" \"node server/websocket.js --port 3001\"",
     "dev:web": "next dev",
-    "dev:ws": "node server/websocket.js",
+    "dev:ws": "node server/websocket.js --port 3001",
     "build": "next build",
-    "start": "concurrently -n web,ws -c cyan,magenta \"next start\" \"node server/websocket.js\"",
+    "start": "concurrently -n web,ws -c cyan,magenta \"next start\" \"node server/websocket.js --port 3001\"",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
