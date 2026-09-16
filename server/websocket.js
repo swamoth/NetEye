@@ -17,7 +17,7 @@
  *
  * Usage:  node server/websocket.js      (reads .env.local if present; PORT or WS_PORT, WS_TICK_MS)
  *
- * Hosts such as Koyeb, Render and Cloud Run inject PORT; locally WS_PORT (default 3001) is used.
+ * Port: --port <n>, else WS_PORT, else PORT (hosts inject it), else 3001.
  */
 
 const fs = require('fs');
@@ -39,7 +39,10 @@ const { WebSocketServer, WebSocket } = require('ws');
 const aggregator = require('./aggregator');
 const { diffIncidents } = require('./feedDiff');
 
-const PORT = Number(process.env.PORT || process.env.WS_PORT || 3001);
+// Port precedence: --port <n> (npm run dev pins 3001 so a PORT set for Next.js by tooling does
+// not collide), then WS_PORT, then PORT (hosts like Render and Cloud Run inject it), then 3001.
+const argPort = (() => { const i = process.argv.indexOf('--port'); return i > -1 ? Number(process.argv[i + 1]) : NaN; })();
+const PORT = Number.isFinite(argPort) ? argPort : Number(process.env.WS_PORT || process.env.PORT || 3001);
 const TICK_MS = Number(process.env.WS_TICK_MS || 5000);
 const HEARTBEAT_MS = 30_000;
 
