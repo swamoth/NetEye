@@ -228,7 +228,11 @@ export default function Globe({
   const arcClick = useCallback((a: object) => onSelect((a as ArcDatum).incidentId), [onSelect]);
   const pathClick = useCallback((p: object) => onSelect((p as PathDatum).incidentId), [onSelect]);
   const globeClick = useCallback(() => onSelect(null), [onSelect]);
-  const polygonLabel = useCallback((d: object) => `<div class="tt-title">${(d as PolygonDatum).label}</div><div class="tt-meta">Country with active incidents</div>`, []);
+  const polygonLabel = useCallback((d: object) => {
+    const p = d as PolygonDatum;
+    return `<div class="tt-title">${p.label}</div><div class="tt-meta">${p.count} active incident${p.count === 1 ? '' : 's'} · click to open the most severe</div>`;
+  }, []);
+  const polygonClick = useCallback((d: object) => onSelect((d as PolygonDatum).incidentId), [onSelect]);
 
   return (
     <div ref={containerRef} className="absolute inset-0 select-none" aria-label="Interactive globe of internet incidents" role="img">
@@ -308,6 +312,7 @@ export default function Globe({
           polygonAltitude={0.005}
           polygonsTransitionDuration={400}
           polygonLabel={polygonLabel}
+          onPolygonClick={polygonClick}
           // DOM markers: pins + arc pills ---------------------------------------------
           htmlElementsData={markers}
           htmlLat="lat"
