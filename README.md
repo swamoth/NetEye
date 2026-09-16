@@ -4,6 +4,8 @@ Outages, BGP route leaks and hijacks, and DDoS activity from the last 24 hours, 
 3D globe, with a replay scrubber, per-incident forensics, an ASN explorer with a live BGP stream,
 shareable views and a documented API. Next.js 15, TypeScript, Tailwind, globe.gl.
 
+**Live:** [net-eye.vercel.app](https://net-eye.vercel.app). Feed: `wss://ws.neteye.workers.dev`.
+
 > **Real data only.** Every incident, count and chart comes from a live upstream feed: Cloudflare
 > Radar for incidents, RPKI statistics and ASN metadata; IODA for country-level outage detections;
 > RIPEstat for prefixes, neighbours and visibility; RIPE RIS Live for BGP updates. NetEye never
@@ -12,7 +14,7 @@ shareable views and a documented API. Next.js 15, TypeScript, Tailwind, globe.gl
 
 ## What it does
 
-- **Live 3D globe.** Night-lights Earth; incident markers sized by severity and coloured by type;
+- **Live 3D globe.** Dot-matrix Earth drawn by a shader; incident markers sized by severity and coloured by type;
   pulsing rings on active incidents; animated arcs for BGP hijacks and leaks (hijacker to victim,
   leaker to upstream) and for DDoS origin to target flows; countries with active incidents
   highlighted. Auto-rotates until you interact.
