@@ -172,10 +172,10 @@ whenever the socket is unreachable.
 ```bash
 npm run worker:login      # opens the browser once (GitHub sign-in works)
 npm run worker:secret     # asks for the Radar token, paste it
-npm run worker:deploy     # prints https://neteye-feed.<account>.workers.dev
+npm run worker:deploy     # prints https://ws.<subdomain>.workers.dev
 ```
 
-Check: `https://neteye-feed.<account>.workers.dev/healthz` returns `{"ok":true,...}`.
+Check: `https://ws.<subdomain>.workers.dev/healthz` returns `{"ok":true,...}`.
 Local run: copy `workers/feed/.dev.vars.example` to `.dev.vars`, then `npm run worker:dev`
 (`ws://localhost:8787`). Use the npm scripts rather than bare `npx wrangler`: they run wrangler
 inside `workers/feed`, because from the project root wrangler loads `.env.local` and mistakes
@@ -186,7 +186,7 @@ named `RADAR_API_TOKEN`.
 
 - Import the repository. Framework preset: Next.js, nothing to change.
 - Environment variables, set before the first build: `CLOUDFLARE_API_TOKEN` (the Radar token)
-  and `NEXT_PUBLIC_WS_URL=wss://neteye-feed.<account>.workers.dev`. `NEXT_PUBLIC_` values are
+  and `NEXT_PUBLIC_WS_URL=wss://ws.<subdomain>.workers.dev`. `NEXT_PUBLIC_` values are
   inlined at build time, so a change needs a redeploy.
 - Open the deployment. The header shows "Live" when the socket connects, "Polling" otherwise,
   and `/api/health` lists both sources.
