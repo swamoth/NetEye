@@ -14,6 +14,7 @@ import { withAlpha } from '@/app/utils/theme';
 import type { CountryFeature } from '@/app/hooks/useGeoData';
 import { countryTint, landMaskBytes } from '@/app/utils/landMask';
 import { createDotEarthMaterial } from '@/app/globe/dotEarthMaterial';
+import { makeMarkerElement, markerVisibility, type HtmlMarkerDatum } from './HtmlMarkers';
 
 const loadGlobe = () => import('react-globe.gl');
 const GlobeGL = dynamic(loadGlobe, { ssr: false });
@@ -43,20 +44,14 @@ export interface Focus extends Partial<Pov> {
   key: number;
 }
 
-export interface GlobeLabel {
-  lat: number;
-  lng: number;
-  text: string;
-  color: string;
-}
-
 export interface GlobeViewProps extends GlobeLayers {
   focus: Focus | null;
   initialPov: Pov | null;
   /** Natural Earth polygons; the dot-matrix surface is built from them in the browser. */
   countries: CountryFeature[];
   autoRotate: boolean;
-  label: GlobeLabel | null;
+  /** DOM markers (pins with a label chip, arc pills). See HtmlMarkers.ts. */
+  markers: HtmlMarkerDatum[];
   onSelect: (incidentId: string | null) => void;
   onHover: (incidentId: string | null) => void;
   onReady: () => void;
@@ -67,7 +62,7 @@ const DEFAULT_POV: Pov = { lat: 22, lng: 12, altitude: 2.3 };
 const IDLE_RESUME_MS = 6000;
 
 export default function Globe({
-  points, rings, arcs, paths, polygons, focus, initialPov, countries, autoRotate, label, onSelect, onHover, onReady, onPovChange,
+  points, rings, arcs, paths, polygons, focus, initialPov, countries, autoRotate, markers, onSelect, onHover, onReady, onPovChange,
 }: GlobeViewProps) {
   const globeRef = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -313,17 +308,14 @@ export default function Globe({
           polygonAltitude={0.005}
           polygonsTransitionDuration={400}
           polygonLabel={polygonLabel}
-          // selected label -------------------------------------------------------
-          labelsData={label ? [label] : []}
-          labelLat="lat"
-          labelLng="lng"
-          labelText="text"
-          labelColor="color"
-          labelSize={0.75}
-          labelAltitude={0.06}
-          labelResolution={2}
-          labelIncludeDot={false}
-          labelsTransitionDuration={0}
+          // DOM markers: pins + arc pills ---------------------------------------------
+          htmlElementsData={markers}
+          htmlLat="lat"
+          htmlLng="lng"
+          htmlAltitude="altitude"
+          htmlElement={makeMarkerElement}
+          htmlElementVisibilityModifier={markerVisibility}
+          htmlTransitionDuration={0}
         />
       )}
     </div>
