@@ -1,0 +1,2 @@
+# Local secrets for `npm run worker:dev`. Copy to .dev.vars (gitignored).
+RADAR_API_TOKEN=

@@ -15,7 +15,12 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "worker:dev": "wrangler --cwd workers/feed dev",
+    "worker:deploy": "wrangler --cwd workers/feed deploy",
+    "worker:typecheck": "tsc -p workers/feed/tsconfig.json",
+    "worker:login": "wrangler --cwd workers/feed login",
+    "worker:secret": "wrangler --cwd workers/feed secret put RADAR_API_TOKEN"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
@@ -31,6 +36,7 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260916.1",
     "@eslint/eslintrc": "^3.2.0",
     "@types/geojson": "^7946.0.14",
     "@types/node": "^22.10.0",
@@ -47,6 +53,7 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "wrangler": "^4.132.0"
   }
 }
