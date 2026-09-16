@@ -170,15 +170,17 @@ whenever the socket is unreachable.
 **1. Feed on Cloudflare Workers** (free plan, no card)
 
 ```bash
-npx wrangler login                                    # opens the browser once
-npx wrangler secret put RADAR_API_TOKEN --config workers/feed/wrangler.toml   # paste the Radar token
-npm run worker:deploy                                 # prints https://neteye-feed.<account>.workers.dev
+npm run worker:login      # opens the browser once (GitHub sign-in works)
+npm run worker:secret     # asks for the Radar token, paste it
+npm run worker:deploy     # prints https://neteye-feed.<account>.workers.dev
 ```
 
 Check: `https://neteye-feed.<account>.workers.dev/healthz` returns `{"ok":true,...}`.
 Local run: copy `workers/feed/.dev.vars.example` to `.dev.vars`, then `npm run worker:dev`
-(`ws://localhost:8787`). The secret is named `RADAR_API_TOKEN` on purpose: wrangler itself uses
-`CLOUDFLARE_API_TOKEN` for its login, and the two must not be confused.
+(`ws://localhost:8787`). Use the npm scripts rather than bare `npx wrangler`: they run wrangler
+inside `workers/feed`, because from the project root wrangler loads `.env.local` and mistakes
+the Radar `CLOUDFLARE_API_TOKEN` for its own login token. That is also why the Worker secret is
+named `RADAR_API_TOKEN`.
 
 **2. App on Vercel** (Hobby, no card)
 

@@ -16,9 +16,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "worker:dev": "wrangler dev --config workers/feed/wrangler.toml",
-    "worker:deploy": "wrangler deploy --config workers/feed/wrangler.toml",
-    "worker:typecheck": "tsc -p workers/feed/tsconfig.json"
+    "worker:dev": "wrangler --cwd workers/feed dev",
+    "worker:deploy": "wrangler --cwd workers/feed deploy",
+    "worker:typecheck": "tsc -p workers/feed/tsconfig.json",
+    "worker:login": "wrangler --cwd workers/feed login",
+    "worker:secret": "wrangler --cwd workers/feed secret put RADAR_API_TOKEN"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
