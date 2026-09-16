@@ -160,6 +160,33 @@ NetEye/
 - IODA outage signals and TeleGeography cable GeoJSON as further adapters (real cable faults).
 - Paste-your-traceroute visualiser; watchlists with webhooks; Postgres history beyond 24 h.
 
+## Deploy
+
+Two services, no code change: the Next.js app on Vercel and the WebSocket server on a host
+that keeps a Node process alive. The browser falls back to HTTP polling every 15 s whenever the
+socket is unreachable, so the app stays live even while the socket host sleeps.
+
+**1. WebSocket server on Koyeb (free instance)**
+
+- New Web Service from this GitHub repository, builder: Buildpack (Node), run command
+  `node server/websocket.js`.
+- Environment: `CLOUDFLARE_API_TOKEN` (the socket server runs the same aggregator and needs
+  the token too). Koyeb injects `PORT`; the server listens on it.
+- Health check: HTTP `GET /healthz` on the exposed port.
+- Note the public host, e.g. `neteye-ws-<you>.koyeb.app`. The free instance sleeps after an
+  hour without traffic and wakes on the next connection.
+
+**2. App on Vercel (Hobby)**
+
+- Import the repository. Framework preset: Next.js. No build settings to change.
+- Environment variables (set before the first build): `CLOUDFLARE_API_TOKEN`,
+  `NEXT_PUBLIC_WS_URL=wss://neteye-ws-<you>.koyeb.app`. `NEXT_PUBLIC_` values are inlined at
+  build time, so a change needs a redeploy.
+- Open the deployment. The header shows "Live" when the socket connects, "Polling" otherwise.
+  `/api/health` lists both sources.
+
+`IODA_DISABLED=1` turns the IODA source off on either service.
+
 ## Development
 
 ```bash
