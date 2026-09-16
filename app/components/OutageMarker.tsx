@@ -78,8 +78,11 @@ export interface PathDatum {
 export interface PolygonDatum {
   id: string;
   geometry: Geometry;
+  /** Cap fill (kept faint: the dot-matrix surface carries the colour). */
   color: string;
   stroke: string;
+  /** Solid type colour for the globe surface's tint map. */
+  tint: string;
   label: string;
 }
 
@@ -226,8 +229,8 @@ export function useGlobeLayers(visible: Incident[], opts: LayerOptions): GlobeLa
       keepPo.add(id);
       const c = TYPE_META[hit.type].glow;
       outPolys.push(upsert(polygons.current, id,
-        () => ({ id, geometry: hit.feature.geometry, color: withAlpha(c, 0.14 + hit.severityRank * 0.05), stroke: withAlpha(c, 0.55), label: hit.feature.name }),
-        (d) => { d.color = withAlpha(c, 0.14 + hit.severityRank * 0.05); d.stroke = withAlpha(c, 0.55); }));
+        () => ({ id, geometry: hit.feature.geometry, color: withAlpha(c, 0.05 + hit.severityRank * 0.02), stroke: withAlpha(c, 0.5), tint: c, label: hit.feature.name }),
+        (d) => { d.color = withAlpha(c, 0.05 + hit.severityRank * 0.02); d.stroke = withAlpha(c, 0.5); d.tint = c; }));
     }
 
     if (you && you.lat != null && you.lng != null) {

@@ -7,13 +7,26 @@
  */
 
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GlobeMethods } from 'react-globe.gl';
 import type { ArcDatum, GlobeLayers, PathDatum, PointDatum, PolygonDatum, RingDatum } from './OutageMarker';
 import { withAlpha } from '@/app/utils/theme';
+import type { CountryFeature } from '@/app/hooks/useGeoData';
+import { countryTint, landMaskBytes } from '@/app/utils/landMask';
+import { createDotEarthMaterial } from '@/app/globe/dotEarthMaterial';
 
 const loadGlobe = () => import('react-globe.gl');
 const GlobeGL = dynamic(loadGlobe, { ssr: false });
+
+/*
+ * globe.gl only reports ready after a globe image loads, so a 1x1 pixel stands in for the photo
+ * texture the dot-matrix material replaced. The material ignores the image.
+ */
+const PIXEL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+const LAND_COLS = 2048, LAND_ROWS = 1024;
+const TINT_COLS = 1024, TINT_ROWS = 512;
+/** Without polygons (fetch failed) the globe ships as a plain sphere after this long. */
+const SURFACE_FALLBACK_MS = 8000;
 
 export interface Pov {
   lat: number;
@@ -40,8 +53,8 @@ export interface GlobeLabel {
 export interface GlobeViewProps extends GlobeLayers {
   focus: Focus | null;
   initialPov: Pov | null;
-  /** Surface texture (object URL from useDotEarth). The globe mounts once it exists. */
-  textureUrl: string | null;
+  /** Natural Earth polygons; the dot-matrix surface is built from them in the browser. */
+  countries: CountryFeature[];
   autoRotate: boolean;
   label: GlobeLabel | null;
   onSelect: (incidentId: string | null) => void;
@@ -54,12 +67,15 @@ const DEFAULT_POV: Pov = { lat: 22, lng: 12, altitude: 2.3 };
 const IDLE_RESUME_MS = 6000;
 
 export default function Globe({
-  points, rings, arcs, paths, polygons, focus, initialPov, textureUrl, autoRotate, label, onSelect, onHover, onReady, onPovChange,
+  points, rings, arcs, paths, polygons, focus, initialPov, countries, autoRotate, label, onSelect, onHover, onReady, onPovChange,
 }: GlobeViewProps) {
   const globeRef = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [ready, setReady] = useState(false);
+  const [surfaceReady, setSurfaceReady] = useState(false);
+  // Created once on the client; three's material objects are plain JS, no WebGL needed yet.
+  const earth = useMemo(() => (typeof window === 'undefined' ? null : createDotEarthMaterial()), []);
   const interacting = useRef(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const povTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -72,6 +88,34 @@ export default function Globe({
 
   // Warm the globe chunk while the surface texture is still being painted.
   useEffect(() => { void loadGlobe(); }, []);
+
+  // Land mask -> material, once the polygons arrive. Fallback: a plain sphere after a while.
+  useEffect(() => {
+    if (!earth) return;
+    if (countries.length) {
+      earth.setLand(landMaskBytes(countries, LAND_COLS, LAND_ROWS), LAND_COLS, LAND_ROWS);
+      setSurfaceReady(true);
+      return;
+    }
+    const id = setTimeout(() => setSurfaceReady(true), SURFACE_FALLBACK_MS);
+    return () => clearTimeout(id);
+  }, [earth, countries]);
+
+  // Affected countries -> tint map. Keyed so the per-second layer rebuilds do not repaint it.
+  const tintKey = polygons.map((p) => `${p.id}:${p.tint}`).join('|');
+  useEffect(() => {
+    if (!earth) return;
+    const entries = polygons.map((p) => ({ geometry: p.geometry as Parameters<typeof countryTint>[0][number]['geometry'], color: p.tint }));
+    earth.setTint(entries.length ? countryTint(entries, TINT_COLS, TINT_ROWS) : null, TINT_COLS, TINT_ROWS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [earth, tintKey]);
+
+  useEffect(() => () => earth?.dispose(), [earth]);
+
+  // The boot screen lifts only when the globe *and* its surface are ready: no bare sphere.
+  useEffect(() => {
+    if (ready && surfaceReady) onReady();
+  }, [ready, surfaceReady, onReady]);
 
   // Track the container size so the canvas always fills it.
   useEffect(() => {
@@ -127,8 +171,7 @@ export default function Globe({
     g.pointOfView(initialPovRef.current ?? DEFAULT_POV, 0);
     if (initialPovRef.current) initialPovApplied.current = true;
     setReady(true);
-    onReady();
-  }, [applyAutoRotate, onReady]);
+  }, [applyAutoRotate]);
 
   useEffect(() => {
     const g = globeRef.current;
@@ -140,12 +183,12 @@ export default function Globe({
   // Watchdog: if the globe instance exists but never reported ready (e.g. a hot reload replaced
   // the instance mid-load), lift the boot screen anyway so the app is never stuck behind it.
   useEffect(() => {
-    if (ready || size.width === 0 || !textureUrl) return;
+    if (ready || size.width === 0) return;
     const id = setTimeout(() => {
       if (!ready && globeRef.current) handleReady();
     }, 8000);
     return () => clearTimeout(id);
-  }, [ready, size.width, textureUrl, handleReady]);
+  }, [ready, size.width, handleReady]);
 
   // Fly-to requests.
   useEffect(() => {
@@ -194,12 +237,13 @@ export default function Globe({
 
   return (
     <div ref={containerRef} className="absolute inset-0 select-none" aria-label="Interactive globe of internet incidents" role="img">
-      {size.width > 0 && textureUrl && (
+      {size.width > 0 && earth && (
         <GlobeGL
           ref={globeRef}
           width={size.width}
           height={size.height}
-          globeImageUrl={textureUrl}
+          globeImageUrl={PIXEL}
+          globeMaterial={earth.material}
           backgroundColor="rgba(0,0,0,0)"
           showAtmosphere
           atmosphereColor="#9aa3b0"
