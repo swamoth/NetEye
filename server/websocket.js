@@ -15,7 +15,9 @@
  *   client -> server
  *     { type: 'ping' }  ->  { type: 'pong', now }
  *
- * Usage:  node server/websocket.js      (reads .env.local if present; WS_PORT, WS_TICK_MS)
+ * Usage:  node server/websocket.js      (reads .env.local if present; PORT or WS_PORT, WS_TICK_MS)
+ *
+ * Hosts such as Koyeb, Render and Cloud Run inject PORT; locally WS_PORT (default 3001) is used.
  */
 
 const fs = require('fs');
@@ -36,7 +38,7 @@ for (const file of ['.env.local', '.env']) {
 const { WebSocketServer, WebSocket } = require('ws');
 const aggregator = require('./aggregator');
 
-const PORT = Number(process.env.WS_PORT || 3001);
+const PORT = Number(process.env.PORT || process.env.WS_PORT || 3001);
 const TICK_MS = Number(process.env.WS_TICK_MS || 5000);
 const HEARTBEAT_MS = 30_000;
 
@@ -49,8 +51,8 @@ const httpServer = http.createServer((req, res) => {
     res.end(JSON.stringify({ ok: true, clients: wss.clients.size, uptimeSec: Math.round(process.uptime()) }));
     return;
   }
-  res.writeHead(426, { 'content-type': 'text/plain' });
-  res.end('NetEye WebSocket endpoint — upgrade required');
+  res.writeHead(426, { 'content-type': 'text/plain; charset=utf-8' });
+  res.end('NetEye WebSocket endpoint. Connect with a WebSocket client; /healthz reports status.');
 });
 
 const wss = new WebSocketServer({ server: httpServer, clientTracking: true });
