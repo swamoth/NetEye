@@ -264,14 +264,22 @@ export default function App({ initial }: { initial: Snapshot | null }) {
     flyTo(loc.lat, loc.lng, altitudeForSpanKm(Math.max(span, 2500)));
   }, [asnOpen, profile.data, flyTo]);
 
-  // Selected incident from a permalink: fly once data + globe are ready.
+  // Selected incident from a permalink: fly once data + globe are ready. The feed only holds the
+  // last 24 h, so a shared link outlives its incident; say so and drop the id instead of opening
+  // nothing. An empty feed means the data is not in yet, so wait rather than accuse the link.
   const flewToInitial = useRef(false);
   useEffect(() => {
     if (flewToInitial.current || !globeReady || !urlReady || !selectedId) return;
-    if (!byId.get(selectedId)) return;
+    if (!byId.get(selectedId)) {
+      if (!incidents.length) return;
+      flewToInitial.current = true;
+      setSelectedId(null);
+      showToast('That incident is outside the 24 h window');
+      return;
+    }
     flewToInitial.current = true;
     if (!initialPov) select(selectedId);
-  }, [globeReady, urlReady, selectedId, byId, select, initialPov]);
+  }, [globeReady, urlReady, selectedId, byId, select, initialPov, incidents.length, showToast]);
 
   // --- URL sync ------------------------------------------------------------------
   const urlState: UrlState = useMemo(() => ({
