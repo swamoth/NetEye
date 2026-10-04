@@ -2,8 +2,12 @@ import type { Metadata, Viewport } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import './globals.css';
+import { siteUrl } from '@/app/utils/site';
 
 export const metadata: Metadata = {
+  // Absolute URLs for the social card and the feed; without this they resolve against nothing
+  // and crawlers drop the preview.
+  metadataBase: new URL(siteUrl()),
   title: 'NetEye: live internet incidents on a globe',
   description:
     'Outages, BGP route leaks and hijacks, and DDoS activity from the last 24 hours, plotted live on a 3D globe from Cloudflare Radar and RIPE data, with replay and an ASN explorer.',
@@ -13,7 +17,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'NetEye: live internet incidents on a globe',
     description: 'Outages, BGP anomalies and DDoS activity, live from real feeds.',
+    siteName: 'NetEye',
+    url: '/',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'NetEye: live internet incidents on a globe',
+    description: 'Outages, BGP anomalies and DDoS activity, live from real feeds.',
   },
 };
 
