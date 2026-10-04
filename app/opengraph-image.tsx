@@ -72,13 +72,30 @@ function Figure({ value, label }: { value: string; label: string }) {
   );
 }
 
+/**
+ * Geist Mono, or nothing. The files are read with fs, which the build tracer cannot see, so
+ * next.config.js names them in outputFileTracingIncludes. If that ever stops working the card
+ * falls back to the renderer's built-in font: a plain card beats a broken one.
+ */
+async function fonts() {
+  try {
+    const [medium, regular] = await Promise.all([
+      readFile(join(process.cwd(), 'assets/GeistMono-Medium.ttf')),
+      readFile(join(process.cwd(), 'assets/GeistMono-Regular.ttf')),
+    ]);
+    return [
+      { name: 'Geist Mono', data: medium, weight: 500 as const, style: 'normal' as const },
+      { name: 'Geist Mono', data: regular, weight: 400 as const, style: 'normal' as const },
+    ];
+  } catch (err) {
+    console.log('social card: fonts unavailable,', (err as Error).message);
+    return undefined;
+  }
+}
+
 export default async function Image() {
   const host = siteUrl().replace(/^https?:\/\//, '');
-  const [medium, regular, live] = await Promise.all([
-    readFile(join(process.cwd(), 'assets/GeistMono-Medium.ttf')),
-    readFile(join(process.cwd(), 'assets/GeistMono-Regular.ttf')),
-    figures(),
-  ]);
+  const [typefaces, live] = await Promise.all([fonts(), figures()]);
 
   return new ImageResponse(
     (
@@ -134,12 +151,6 @@ export default async function Image() {
         </div>
       </div>
     ),
-    {
-      ...size,
-      fonts: [
-        { name: 'Geist Mono', data: medium, weight: 500, style: 'normal' },
-        { name: 'Geist Mono', data: regular, weight: 400, style: 'normal' },
-      ],
-    },
+    { ...size, fonts: typefaces },
   );
 }
