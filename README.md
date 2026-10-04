@@ -106,6 +106,7 @@ CLOUDFLARE_API_TOKEN=          # Cloudflare Radar (incident feed, RPKI stats, AS
 RADAR_CACHE_TTL_MS=60000       # upstream cache for the incident feed
 WS_PORT=3001                   # WebSocket server port
 NEXT_PUBLIC_WS_URL=ws://localhost:3001
+# NEXT_PUBLIC_SITE_URL=https://neteye.example   # only for a custom domain
 ```
 
 See [`.env.example`](.env.example) for the full list.
@@ -189,7 +190,8 @@ named `RADAR_API_TOKEN`.
 - Import the repository. Framework preset: Next.js, nothing to change.
 - Environment variables, set before the first build: `CLOUDFLARE_API_TOKEN` (the Radar token)
   and `NEXT_PUBLIC_WS_URL=wss://ws.<subdomain>.workers.dev`. `NEXT_PUBLIC_` values are
-  inlined at build time, so a change needs a redeploy.
+  inlined at build time, so a change needs a redeploy. Add `NEXT_PUBLIC_SITE_URL` only for a
+  custom domain; Vercel's own host is detected.
 - Open the deployment. The header shows "Live" when the socket connects, "Polling" otherwise,
   and `/api/health` lists both sources.
 
